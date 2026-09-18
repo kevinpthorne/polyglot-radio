@@ -28,6 +28,7 @@ class _HomeScreenState extends State<HomeScreen> {
         backgroundColor: const Color(0xFF161B22),
         elevation: 0,
         title: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Container(
               padding: const EdgeInsets.all(4),
@@ -39,32 +40,149 @@ class _HomeScreenState extends State<HomeScreen> {
               child: const Icon(Icons.radar, color: Colors.cyanAccent, size: 20),
             ),
             const SizedBox(width: 10),
-            const Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Polyglot Radio: Acoustic SDR",
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 0.5,
-                    color: Colors.white,
+            const Flexible(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    "Polyglot Radio: Acoustic SDR",
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.5,
+                      color: Colors.white,
+                    ),
                   ),
-                ),
-                Text(
-                  "ACOUSTIC SOFTWARE-DEFINED MODEM",
-                  style: TextStyle(
-                    fontSize: 9,
-                    fontFamily: 'monospace',
-                    letterSpacing: 1.0,
-                    color: Colors.cyanAccent,
+                  Text(
+                    "ACOUSTIC SOFTWARE-DEFINED MODEM",
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 8.5,
+                      fontFamily: 'monospace',
+                      letterSpacing: 1.0,
+                      color: Colors.cyanAccent,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ],
         ),
         actions: [
+          // TX Audio Mute Toggle Button
+          ValueListenableBuilder<bool>(
+            valueListenable: coordinator.isOutputMutedNotifier,
+            builder: (context, isMuted, _) {
+              return Tooltip(
+                message: isMuted
+                    ? "TX Audio Muted (Click to Unmute Speaker/TX)"
+                    : "TX Audio Active (Click to Mute Speaker/TX)",
+                child: InkWell(
+                  key: const Key('tx_mute_button'),
+                  onTap: () => coordinator.toggleOutputMute(),
+                  borderRadius: BorderRadius.circular(6),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 3),
+                    decoration: BoxDecoration(
+                      color: isMuted
+                          ? Colors.redAccent.withOpacity(0.2)
+                          : Colors.cyanAccent.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(
+                        color: isMuted
+                            ? Colors.redAccent.withOpacity(0.7)
+                            : Colors.cyanAccent.withOpacity(0.4),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          "TX",
+                          style: TextStyle(
+                            fontFamily: 'monospace',
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                            letterSpacing: 0.5,
+                            color: isMuted ? Colors.redAccent : Colors.cyanAccent,
+                            decoration: isMuted ? TextDecoration.lineThrough : null,
+                            decorationColor: Colors.redAccent,
+                            decorationThickness: 2,
+                          ),
+                        ),
+                        const SizedBox(width: 3),
+                        Icon(
+                          isMuted ? Icons.volume_off : Icons.volume_up,
+                          size: 13,
+                          color: isMuted ? Colors.redAccent : Colors.cyanAccent,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+
+          // RX Audio Mute Toggle Button
+          ValueListenableBuilder<bool>(
+            valueListenable: coordinator.isInputMutedNotifier,
+            builder: (context, isMuted, _) {
+              return Tooltip(
+                message: isMuted
+                    ? "RX Mic Muted (Click to Unmute Mic/Sentry)"
+                    : "RX Mic Active (Click to Mute Mic/Sentry)",
+                child: InkWell(
+                  key: const Key('rx_mute_button'),
+                  onTap: () => coordinator.toggleInputMute(),
+                  borderRadius: BorderRadius.circular(6),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 3),
+                    decoration: BoxDecoration(
+                      color: isMuted
+                          ? Colors.redAccent.withOpacity(0.2)
+                          : Colors.cyanAccent.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(
+                        color: isMuted
+                            ? Colors.redAccent.withOpacity(0.7)
+                            : Colors.cyanAccent.withOpacity(0.4),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          "RX",
+                          style: TextStyle(
+                            fontFamily: 'monospace',
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                            letterSpacing: 0.5,
+                            color: isMuted ? Colors.redAccent : Colors.cyanAccent,
+                            decoration: isMuted ? TextDecoration.lineThrough : null,
+                            decorationColor: Colors.redAccent,
+                            decorationThickness: 2,
+                          ),
+                        ),
+                        const SizedBox(width: 3),
+                        Icon(
+                          isMuted ? Icons.mic_off : Icons.mic,
+                          size: 13,
+                          color: isMuted ? Colors.redAccent : Colors.cyanAccent,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+
           // Toggle waterfall view
           IconButton(
             tooltip: _showWaterfall ? "Hide Spectrogram" : "Show Spectrogram",

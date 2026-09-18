@@ -6,7 +6,7 @@ CXX_DEFINES =
 
 CXX_INCLUDES = -I/Users/kevint/dev/polyglot-radio/native_core/include -I/Users/kevint/dev/polyglot-radio/native_core/external
 
-CXX_FLAGSarm64 = -std=gnu++20 -arch arm64 -fPIE
+CXX_FLAGSarm64 = -O3 -DNDEBUG -std=gnu++20 -arch arm64 -fPIE
 
-CXX_FLAGS = -std=gnu++20 -arch arm64 -fPIE
+CXX_FLAGS = -O3 -DNDEBUG -std=gnu++20 -arch arm64 -fPIE
 

@@ -34,9 +34,36 @@ void main() {
     // Verify Empty State text when no transmissions exist
     expect(find.text('AWAITING ACOUSTIC SIGNALS'), findsOneWidget);
 
-    // Verify Protocol Selector Badge in Composer
+    // Verify Protocol Selector Badge & HEX toggle in Composer
     expect(find.byType(TextField), findsOneWidget);
-    expect(find.text('TX'), findsOneWidget);
+    // 2 'TX' texts: one in AppBar TX mute button, one in Composer TX button
+    expect(find.text('TX'), findsNWidgets(2));
+    expect(find.text('RX'), findsOneWidget);
+    expect(find.text('TXT'), findsOneWidget);
+
+    // Toggle RX Mute button
+    await tester.tap(find.byKey(const Key('rx_mute_button')));
+    await tester.pumpAndSettle();
+    expect(ModemCoordinator.instance.isInputMutedNotifier.value, isTrue);
+    await tester.tap(find.byKey(const Key('rx_mute_button')));
+    await tester.pumpAndSettle();
+    expect(ModemCoordinator.instance.isInputMutedNotifier.value, isFalse);
+
+    // Toggle TX Mute button
+    await tester.tap(find.byKey(const Key('tx_mute_button')));
+    await tester.pumpAndSettle();
+    expect(ModemCoordinator.instance.isOutputMutedNotifier.value, isTrue);
+    await tester.tap(find.byKey(const Key('tx_mute_button')));
+    await tester.pumpAndSettle();
+    expect(ModemCoordinator.instance.isOutputMutedNotifier.value, isFalse);
+
+    // Toggle to HEX mode and back
+    await tester.tap(find.text('TXT'));
+    await tester.pumpAndSettle();
+    expect(find.text('HEX'), findsOneWidget);
+    await tester.tap(find.text('HEX'));
+    await tester.pumpAndSettle();
+    expect(find.text('TXT'), findsOneWidget);
 
     // Tap Settings Button in AppBar
     await tester.tap(find.byIcon(Icons.settings_outlined));
@@ -45,6 +72,8 @@ void main() {
     // Verify Settings Dialog opens
     expect(find.text('STATION SETTINGS'), findsOneWidget);
     expect(find.text('Amateur Radio Callsign (Required for APRS)'), findsOneWidget);
+    expect(find.text('DUMP JSON'), findsOneWidget);
+    expect(find.text('PURGE ALL'), findsOneWidget);
 
     // Close Dialog
     await tester.tap(find.text('CANCEL'));

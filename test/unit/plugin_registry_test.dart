@@ -18,7 +18,6 @@ void main() {
         'sstv_scottie2',
         'sstv_robot36',
         'sstv_pd120',
-        'rattlegram',
         'aprs_bell202',
         'eas_same',
         'cw_morse',

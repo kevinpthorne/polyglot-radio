@@ -55,8 +55,17 @@ public:
         if (count < 256) return 0.0f;
         float mark = dsp::Goertzel::compute_magnitude(samples, count, 1200.0f, static_cast<float>(sample_rate_));
         float space = dsp::Goertzel::compute_magnitude(samples, count, 2200.0f, static_cast<float>(sample_rate_));
+        float mag_hell = dsp::Goertzel::compute_magnitude(samples, count, 980.0f, static_cast<float>(sample_rate_));
+        float mag_eas_space = dsp::Goertzel::compute_magnitude(samples, count, 1562.5f, static_cast<float>(sample_rate_));
+        float mag_sstv = dsp::Goertzel::compute_magnitude(samples, count, 1900.0f, static_cast<float>(sample_rate_));
+
+        // Reject if adjacent non-Bell-202 signals are active
+        if (mag_hell > mark * 0.75f || mag_eas_space > 0.03f || mag_sstv > 0.035f) {
+            return 0.0f;
+        }
+
         float total = mark + space;
-        if (total > 0.03f) {
+        if (total > 0.035f && total > 2.0f * (mag_hell + 0.008f)) {
             return std::min(1.0f, total * 15.0f);
         }
         return 0.0f;

@@ -64,6 +64,25 @@ void main() {
       expect(RasterBridge.instance.height, equals(496));
     });
 
+    test('TX and RX audio mute controls and playback bindings', () {
+      // Test TX Output Mute
+      bindings.setOutputMuted(true);
+      expect(bindings.isOutputMuted(), isTrue);
+      bindings.setOutputMuted(false);
+      expect(bindings.isOutputMuted(), isFalse);
+
+      // Test RX Input Mute
+      bindings.setInputMuted(true);
+      expect(bindings.isInputMuted(), isTrue);
+      bindings.setInputMuted(false);
+      expect(bindings.isInputMuted(), isFalse);
+
+      // Test Playback State
+      expect(bindings.isAudioPlaying(), isFalse);
+      bindings.stopAudioPlayback();
+      expect(bindings.isAudioPlaying(), isFalse);
+    });
+
     test('Audio HAL gracefully stops', () {
       bindings.stopAudioHAL();
       expect(bindings.isAudioHALRunning(), isFalse);

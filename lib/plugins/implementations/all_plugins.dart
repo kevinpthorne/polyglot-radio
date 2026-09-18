@@ -72,7 +72,7 @@ class EasSamePlugin extends ModemProtocolPlugin {
   @override
   String get displayName => 'EAS / SAME Alert';
   @override
-  String get description => 'Emergency Alert System AFSK specific area message encoding';
+  String get description => 'Emergency Alert System (NOAA Weather & Disaster Warning AFSK data bursts: ZCZC-...)';
   @override
   PayloadCategory get category => PayloadCategory.packet;
   @override
@@ -135,9 +135,9 @@ class FeldHellPlugin extends ModemProtocolPlugin {
   @override
   String get displayName => 'Feld Hell (Hellschreiber)';
   @override
-  String get description => '122.5 Hz dot-matrix facsimile telegraphy rendered to shared canvas';
+  String get description => '122.5 Hz dot-matrix visual facsimile telegraphy rendered to chat frame';
   @override
-  PayloadCategory get category => PayloadCategory.textStream;
+  PayloadCategory get category => PayloadCategory.image;
   @override
   bool get requiresCallsign => false;
 
@@ -145,7 +145,7 @@ class FeldHellPlugin extends ModemProtocolPlugin {
   Map<String, dynamic> getDefaultConfig() => {'dot_clock': 122.5};
 
   @override
-  String formatPayload(Uint8List payload) => utf8.decode(payload, allowMalformed: true);
+  String formatPayload(Uint8List payload) => '[Feld-Hell Facsimile]';
 }
 
 class OliviaPlugin extends ModemProtocolPlugin {

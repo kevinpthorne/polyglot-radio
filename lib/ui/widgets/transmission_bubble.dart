@@ -1,5 +1,8 @@
 import 'dart:io';
+import 'dart:ui' as ui;
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:path/path.dart' as p;
 import '../../database/models.dart';
 import '../../plugins/modem_plugin.dart';
 import '../../core/modem_coordinator.dart';
@@ -116,6 +119,74 @@ class TransmissionBubble extends StatelessWidget {
             _formatTimestamp(transmission.timestamp),
             style: const TextStyle(fontSize: 10, color: Colors.white38),
           ),
+          if (!isTx &&
+              transmission.audioFilePath.isNotEmpty &&
+              transmission.audioFilePath != 'outbound_tx') ...[
+            const SizedBox(width: 6),
+            PopupMenuButton<String>(
+              tooltip: "Re-classify / Re-demodulate as other modem",
+              icon: const Icon(Icons.alt_route_rounded, size: 16, color: Colors.amberAccent),
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+              color: const Color(0xFF1E293B),
+              itemBuilder: (ctx) {
+                return PluginRegistry.instance.all.map((p) {
+                  return PopupMenuItem<String>(
+                    value: p.id,
+                    height: 32,
+                    child: Row(
+                      children: [
+                        Icon(
+                          p.category == PayloadCategory.image
+                              ? Icons.image_outlined
+                              : p.category == PayloadCategory.packet
+                                  ? Icons.all_inbox_outlined
+                                  : Icons.text_snippet_outlined,
+                          size: 15,
+                          color: p.id == transmission.protocolId
+                              ? Colors.amberAccent
+                              : Colors.white70,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          p.displayName,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: p.id == transmission.protocolId
+                                ? Colors.amberAccent
+                                : Colors.white,
+                            fontWeight: p.id == transmission.protocolId
+                                ? FontWeight.bold
+                                : FontWeight.normal,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList();
+              },
+              onSelected: (targetModemId) {
+                final success = ModemCoordinator.instance.reprocessRecording(
+                  wavPath: transmission.audioFilePath,
+                  targetModemId: targetModemId,
+                );
+                final targetPlugin = PluginRegistry.instance.get(targetModemId);
+                final name = targetPlugin?.displayName ?? targetModemId;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    backgroundColor: const Color(0xFF1E293B),
+                    content: Text(
+                      success
+                          ? "Re-demodulating recording as $name..."
+                          : "Failed to start re-demodulation as $name",
+                      style: const TextStyle(color: Colors.cyanAccent),
+                    ),
+                    duration: const Duration(seconds: 3),
+                  ),
+                );
+              },
+            ),
+          ],
         ],
       ),
     );
@@ -197,11 +268,14 @@ class TransmissionBubble extends StatelessWidget {
   Widget _buildImageBubble(BuildContext context) {
     final imagePath = transmission.imageFilePath;
     final file = imagePath != null ? File(imagePath) : null;
+    final hasImageFile = file != null && file.existsSync();
+    final isActiveBurst = ModemCoordinator.instance.isSentryLocked &&
+        (transmission.id == ModemCoordinator.instance.activeImageTxId);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (file != null && file.existsSync())
+        if (hasImageFile)
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
             child: Image.file(
@@ -211,26 +285,26 @@ class TransmissionBubble extends StatelessWidget {
               height: 180,
             ),
           )
+        else if (isActiveBurst)
+          ValueListenableBuilder<ui.Image?>(
+            valueListenable: ModemCoordinator.instance.liveCanvasNotifier,
+            builder: (context, liveImage, child) {
+              if (liveImage != null) {
+                return ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: RawImage(
+                    image: liveImage,
+                    fit: BoxFit.contain,
+                    width: double.infinity,
+                    height: 180,
+                  ),
+                );
+              }
+              return _buildPlaceholderContainer();
+            },
+          )
         else
-          Container(
-            height: 120,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: Colors.black45,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.white12),
-            ),
-            child: const Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.broken_image, color: Colors.white38, size: 28),
-                  SizedBox(height: 4),
-                  Text("Scanline Frame Buffer", style: TextStyle(color: Colors.white38, fontSize: 10)),
-                ],
-              ),
-            ),
-          ),
+          _buildPlaceholderContainer(),
         const SizedBox(height: 6),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -239,14 +313,76 @@ class TransmissionBubble extends StatelessWidget {
               "Format: ${transmission.protocolDisplayName}",
               style: const TextStyle(color: Colors.white60, fontSize: 10, fontFamily: 'monospace'),
             ),
-            const Text(
-              "Sync PLL: Locked",
-              style: TextStyle(color: Colors.greenAccent, fontSize: 10, fontFamily: 'monospace'),
-            ),
+            if (hasImageFile)
+              IconButton(
+                iconSize: 18,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+                tooltip: "Export Image (.png)",
+                icon: const Icon(Icons.file_download_outlined, color: Colors.cyanAccent),
+                onPressed: () => _exportImage(context, file),
+              )
+            else
+              Text(
+                isActiveBurst ? "Sync PLL: Receiving..." : "Frame Complete",
+                style: TextStyle(
+                  color: isActiveBurst ? Colors.greenAccent : Colors.white38,
+                  fontSize: 10,
+                  fontFamily: 'monospace',
+                ),
+              ),
           ],
         ),
       ],
     );
+  }
+
+  Widget _buildPlaceholderContainer() {
+    return Container(
+      height: 120,
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.black45,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.white12),
+      ),
+      child: const Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.broken_image, color: Colors.white38, size: 28),
+            SizedBox(height: 4),
+            Text("Scanline Frame Buffer", style: TextStyle(color: Colors.white38, fontSize: 10)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _exportImage(BuildContext context, File file) async {
+    final suggestedName = p.basename(file.path);
+    try {
+      final bytes = await file.readAsBytes();
+      final resultUri = await FilePicker.saveFile(
+        dialogTitle: 'Export Image (.png)',
+        fileName: suggestedName.isNotEmpty ? suggestedName : 'sstv_image.png',
+        bytes: bytes,
+        type: FileType.custom,
+        allowedExtensions: ['png'],
+      );
+      if (resultUri != null && context.mounted) {
+        final displayName = p.basename(resultUri.path);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Image exported to $displayName')),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Export failed: $e')),
+        );
+      }
+    }
   }
 
   Widget _buildTextStreamBubble(BuildContext context) {

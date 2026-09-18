@@ -1,6 +1,9 @@
+import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:path/path.dart' as p;
 import '../../core/modem_coordinator.dart';
-import '../../database/models.dart';
+import 'modem_params_dialog.dart';
 
 class StationSettingsDialog extends StatefulWidget {
   const StationSettingsDialog({super.key});
@@ -36,6 +39,72 @@ class _StationSettingsDialogState extends State<StationSettingsDialog> {
     super.dispose();
   }
 
+  Future<void> _dumpDatabase() async {
+    try {
+      final coordinator = ModemCoordinator.instance;
+      final txs = coordinator.database.getTransmissions(limit: 10000);
+      final jsonList = txs.map((t) => t.toMap()).toList();
+      final jsonStr = const JsonEncoder.withIndent('  ').convert(jsonList);
+
+      final now = DateTime.now().millisecondsSinceEpoch;
+      final dir = Directory(coordinator.storageDirectory);
+      if (!dir.existsSync()) dir.createSync(recursive: true);
+      final filePath = p.join(dir.path, 'polyglot_database_dump_$now.json');
+      final file = File(filePath);
+      await file.writeAsString(jsonStr);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Database dumped (${txs.length} records) to:\n$filePath"),
+            duration: const Duration(seconds: 5),
+            backgroundColor: Colors.teal,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error dumping database: $e"), backgroundColor: Colors.redAccent),
+        );
+      }
+    }
+  }
+
+  Future<void> _clearDatabase() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF161B22),
+        title: const Text("PURGE ALL TRANSMISSIONS", style: TextStyle(color: Colors.redAccent, fontSize: 14)),
+        content: const Text(
+          "Are you sure you want to delete all saved transmissions from the database? This action cannot be undone.",
+          style: TextStyle(color: Colors.white70, fontSize: 12),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text("CANCEL", style: TextStyle(color: Colors.white54)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text("PURGE ALL"),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      ModemCoordinator.instance.database.clearAll();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("All transmissions purged from database."), backgroundColor: Colors.redAccent),
+        );
+      }
+    }
+  }
+
   void _saveSettings() {
     final text = _callsignCtrl.text.trim().toUpperCase();
     if (text.isNotEmpty) {
@@ -48,8 +117,10 @@ class _StationSettingsDialogState extends State<StationSettingsDialog> {
       }
     }
 
-    final newSettings = StationSettings(
+    final current = ModemCoordinator.instance.settingsNotifier.value;
+    final newSettings = current.copyWith(
       callsign: text.isEmpty ? null : text,
+      clearCallsign: text.isEmpty,
       stationSymbol: _symbolCtrl.text.trim().isEmpty ? "/-" : _symbolCtrl.text.trim(),
       fipsCountyCode: _fipsCtrl.text.trim().isEmpty ? "000000" : _fipsCtrl.text.trim(),
       squelchThresholdDb: _squelchDb,
@@ -161,8 +232,62 @@ class _StationSettingsDialogState extends State<StationSettingsDialog> {
                 style: TextStyle(color: Colors.white54, fontSize: 10),
               ),
               value: _isLoopback,
-              activeColor: Colors.purpleAccent,
+              activeThumbColor: Colors.purpleAccent,
               onChanged: (val) => setState(() => _isLoopback = val),
+            ),
+            const Divider(color: Colors.white12, height: 24),
+
+            // Modem Parameters Tuning
+            OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.cyanAccent,
+                side: const BorderSide(color: Colors.cyanAccent),
+                minimumSize: const Size(double.infinity, 38),
+              ),
+              icon: const Icon(Icons.tune, size: 16),
+              label: const Text("TWEAK MODEM PARAMETERS (CARRIER, CW, SSTV)",
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (ctx) => const ModemParamsDialog(),
+                );
+              },
+            ),
+            const Divider(color: Colors.white12, height: 24),
+
+            // Database Management Section
+            const Text(
+              "DATABASE MANAGEMENT",
+              style: TextStyle(color: Colors.cyanAccent, fontSize: 11, fontWeight: FontWeight.bold, fontFamily: 'monospace'),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.cyanAccent,
+                      side: const BorderSide(color: Colors.cyanAccent),
+                    ),
+                    icon: const Icon(Icons.file_download_outlined, size: 16),
+                    label: const Text("DUMP JSON", style: TextStyle(fontSize: 11)),
+                    onPressed: _dumpDatabase,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.redAccent,
+                      side: const BorderSide(color: Colors.redAccent),
+                    ),
+                    icon: const Icon(Icons.delete_forever_outlined, size: 16),
+                    label: const Text("PURGE ALL", style: TextStyle(fontSize: 11)),
+                    onPressed: _clearDatabase,
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -174,7 +299,7 @@ class _StationSettingsDialogState extends State<StationSettingsDialog> {
         ),
         ElevatedButton(
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.cyanAccent.withOpacity(0.2),
+            backgroundColor: Colors.cyanAccent.withValues(alpha: 0.2),
             foregroundColor: Colors.cyanAccent,
           ),
           onPressed: _saveSettings,

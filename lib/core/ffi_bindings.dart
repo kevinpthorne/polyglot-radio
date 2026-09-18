@@ -67,6 +67,7 @@ class PolyglotNativeBindings {
   late final bool Function() _isSquelchOpen;
 
   late final bool Function(Pointer<Utf8>, Pointer<Uint8>, int, Pointer<Utf8>) _startTransmit;
+  late final void Function(Pointer<Utf8>, Pointer<Utf8>) _configureModem;
   late final bool Function() _isTransmitting;
   late final void Function() _abortTransmit;
 
@@ -78,6 +79,20 @@ class PolyglotNativeBindings {
   late final bool Function(Pointer<Utf8>, Pointer<Utf8>, Pointer<Utf8>) _reprocessRecording;
   late final void Function(Pointer<Utf8>) _setStorageDirectory;
   late final void Function(Pointer<Float>, int) _injectAudioSamples;
+
+  late final void Function(bool) _setOutputMuted;
+  late final bool Function() _isOutputMuted;
+  late final void Function(bool) _setInputMuted;
+  late final bool Function() _isInputMuted;
+
+  late final bool Function(Pointer<Utf8>) _playAudioFile;
+  late final void Function() _pauseAudioPlayback;
+  late final void Function() _resumeAudioPlayback;
+  late final void Function() _stopAudioPlayback;
+  late final bool Function() _isAudioPlaying;
+  late final double Function() _getAudioPlaybackPosition;
+  late final double Function() _getAudioPlaybackDuration;
+  late final void Function(double) _seekAudioPlayback;
 
   PolyglotNativeBindings._internal() {
     lib = _loadLibrary();
@@ -126,6 +141,10 @@ class PolyglotNativeBindings {
         .lookup<NativeFunction<Bool Function(Pointer<Utf8>, Pointer<Uint8>, Size, Pointer<Utf8>)>>('Native_StartTransmit')
         .asFunction();
 
+    _configureModem = lib
+        .lookup<NativeFunction<Void Function(Pointer<Utf8>, Pointer<Utf8>)>>('Native_ConfigureModem')
+        .asFunction();
+
     _isTransmitting = lib
         .lookup<NativeFunction<Bool Function()>>('Native_IsTransmitting')
         .asFunction();
@@ -162,37 +181,159 @@ class PolyglotNativeBindings {
         .lookup<NativeFunction<Void Function(Pointer<Float>, Size)>>('Native_InjectAudioSamples')
         .asFunction();
 
+    _setOutputMuted = lib
+        .lookup<NativeFunction<Void Function(Bool)>>('Native_SetOutputMuted')
+        .asFunction();
+
+    _isOutputMuted = lib
+        .lookup<NativeFunction<Bool Function()>>('Native_IsOutputMuted')
+        .asFunction();
+
+    _setInputMuted = lib
+        .lookup<NativeFunction<Void Function(Bool)>>('Native_SetInputMuted')
+        .asFunction();
+
+    _isInputMuted = lib
+        .lookup<NativeFunction<Bool Function()>>('Native_IsInputMuted')
+        .asFunction();
+
+    _playAudioFile = lib
+        .lookup<NativeFunction<Bool Function(Pointer<Utf8>)>>('Native_PlayAudioFile')
+        .asFunction();
+
+    _pauseAudioPlayback = lib
+        .lookup<NativeFunction<Void Function()>>('Native_PauseAudioPlayback')
+        .asFunction();
+
+    _resumeAudioPlayback = lib
+        .lookup<NativeFunction<Void Function()>>('Native_ResumeAudioPlayback')
+        .asFunction();
+
+    _stopAudioPlayback = lib
+        .lookup<NativeFunction<Void Function()>>('Native_StopAudioPlayback')
+        .asFunction();
+
+    _isAudioPlaying = lib
+        .lookup<NativeFunction<Bool Function()>>('Native_IsAudioPlaying')
+        .asFunction();
+
+    _getAudioPlaybackPosition = lib
+        .lookup<NativeFunction<Float Function()>>('Native_GetAudioPlaybackPosition')
+        .asFunction();
+
+    _getAudioPlaybackDuration = lib
+        .lookup<NativeFunction<Float Function()>>('Native_GetAudioPlaybackDuration')
+        .asFunction();
+
+    _seekAudioPlayback = lib
+        .lookup<NativeFunction<Void Function(Float)>>('Native_SeekAudioPlayback')
+        .asFunction();
+
     // Initialize Dart API DL
     _initDartApiDL(NativeApi.initializeApiDLData);
   }
 
   static DynamicLibrary _loadLibrary() {
     if (Platform.isMacOS) {
-      // Check multiple standard locations
-      final candidates = [
+      final exe = File(Platform.resolvedExecutable);
+      final exeDir = exe.parent;
+
+      // 1. Check inside macOS app bundle Frameworks / MacOS
+      final bundleCandidates = [
+        '${exeDir.path}/../Frameworks/libpolyglot_native.dylib',
+        '${exeDir.path}/libpolyglot_native.dylib',
+      ];
+      for (final p in bundleCandidates) {
+        if (File(p).existsSync()) {
+          try {
+            return DynamicLibrary.open(p);
+          } catch (_) {}
+        }
+      }
+
+      // 2. Relative to current working directory (e.g. tests or CLI)
+      final cwdCandidates = [
+        '${Directory.current.path}/native_core/build/libpolyglot_native.dylib',
         'native_core/build/libpolyglot_native.dylib',
         '../native_core/build/libpolyglot_native.dylib',
         '../../native_core/build/libpolyglot_native.dylib',
-        '${Directory.current.path}/native_core/build/libpolyglot_native.dylib',
-        'libpolyglot_native.dylib',
       ];
-      for (final path in candidates) {
-        if (File(path).existsSync()) {
-          return DynamicLibrary.open(path);
+      for (final p in cwdCandidates) {
+        if (File(p).existsSync()) {
+          try {
+            return DynamicLibrary.open(p);
+          } catch (_) {}
         }
       }
-      return DynamicLibrary.process();
+
+      // 3. Walk up the directory tree from the executable to find project root / native_core
+      var dir = exeDir;
+      for (int i = 0; i < 12; i++) {
+        final checkPath = '${dir.path}/native_core/build/libpolyglot_native.dylib';
+        if (File(checkPath).existsSync()) {
+          try {
+            return DynamicLibrary.open(checkPath);
+          } catch (_) {}
+        }
+        final parent = dir.parent;
+        if (parent.path == dir.path) break;
+        dir = parent;
+      }
+
+      // 4. Default dyld search
+      try {
+        return DynamicLibrary.open('libpolyglot_native.dylib');
+      } catch (_) {
+        return DynamicLibrary.process();
+      }
     } else if (Platform.isLinux) {
-      final candidates = [
-        'native_core/build/libpolyglot_native.so',
-        'libpolyglot_native.so',
+      final exe = File(Platform.resolvedExecutable);
+      final exeDir = exe.parent;
+
+      final bundleCandidates = [
+        '${exeDir.path}/lib/libpolyglot_native.so',
+        '${exeDir.path}/libpolyglot_native.so',
       ];
-      for (final path in candidates) {
-        if (File(path).existsSync()) {
-          return DynamicLibrary.open(path);
+      for (final p in bundleCandidates) {
+        if (File(p).existsSync()) {
+          try {
+            return DynamicLibrary.open(p);
+          } catch (_) {}
         }
       }
-      return DynamicLibrary.process();
+
+      final cwdCandidates = [
+        '${Directory.current.path}/native_core/build/libpolyglot_native.so',
+        'native_core/build/libpolyglot_native.so',
+        '../native_core/build/libpolyglot_native.so',
+        '../../native_core/build/libpolyglot_native.so',
+      ];
+      for (final p in cwdCandidates) {
+        if (File(p).existsSync()) {
+          try {
+            return DynamicLibrary.open(p);
+          } catch (_) {}
+        }
+      }
+
+      var dir = exeDir;
+      for (int i = 0; i < 12; i++) {
+        final checkPath = '${dir.path}/native_core/build/libpolyglot_native.so';
+        if (File(checkPath).existsSync()) {
+          try {
+            return DynamicLibrary.open(checkPath);
+          } catch (_) {}
+        }
+        final parent = dir.parent;
+        if (parent.path == dir.path) break;
+        dir = parent;
+      }
+
+      try {
+        return DynamicLibrary.open('libpolyglot_native.so');
+      } catch (_) {
+        return DynamicLibrary.process();
+      }
     } else if (Platform.isAndroid) {
       return DynamicLibrary.open('libpolyglot_native.so');
     } else if (Platform.isIOS) {
@@ -239,6 +380,17 @@ class PolyglotNativeBindings {
 
   bool isTransmitting() => _isTransmitting();
   void abortTransmit() => _abortTransmit();
+
+  void configureModem(String modemId, String jsonConfig) {
+    final modemPtr = modemId.toNativeUtf8();
+    final configPtr = jsonConfig.toNativeUtf8();
+    try {
+      _configureModem(modemPtr, configPtr);
+    } finally {
+      calloc.free(modemPtr);
+      calloc.free(configPtr);
+    }
+  }
 
   Pointer<Uint8> getSharedCanvasPtr() => _getSharedCanvasPtr();
   int getSharedCanvasSize() => _getSharedCanvasSize();
@@ -291,4 +443,26 @@ class PolyglotNativeBindings {
       calloc.free(ptr);
     }
   }
+
+  void setOutputMuted(bool muted) => _setOutputMuted(muted);
+  bool isOutputMuted() => _isOutputMuted();
+  void setInputMuted(bool muted) => _setInputMuted(muted);
+  bool isInputMuted() => _isInputMuted();
+
+  bool playAudioFile(String path) {
+    final ptr = path.toNativeUtf8();
+    try {
+      return _playAudioFile(ptr);
+    } finally {
+      calloc.free(ptr);
+    }
+  }
+
+  void pauseAudioPlayback() => _pauseAudioPlayback();
+  void resumeAudioPlayback() => _resumeAudioPlayback();
+  void stopAudioPlayback() => _stopAudioPlayback();
+  bool isAudioPlaying() => _isAudioPlaying();
+  double getAudioPlaybackPosition() => _getAudioPlaybackPosition();
+  double getAudioPlaybackDuration() => _getAudioPlaybackDuration();
+  void seekAudioPlayback(double seconds) => _seekAudioPlayback(seconds);
 }

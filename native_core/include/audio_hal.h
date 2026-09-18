@@ -77,7 +77,8 @@ public:
     void shutdown();
     bool is_running() const { return is_running_.load(); }
 
-    void set_loopback_mode(bool enabled) { loopback_mode_.store(enabled); }
+    bool start_hardware_device(int sample_rate = kSampleRate);
+    void set_loopback_mode(bool enabled);
     bool is_loopback_mode() const { return loopback_mode_.load(); }
 
     void set_squelch_threshold_db(float db) { squelch_threshold_db_.store(db); }
@@ -88,10 +89,28 @@ public:
     // Register callback for DSP processing of incoming audio frames
     void set_rx_callback(AudioFrameCallback cb) { rx_callback_ = cb; }
 
+    // Mute Controls (TX output mute, RX input mute)
+    void set_output_muted(bool muted) { is_output_muted_.store(muted); }
+    bool is_output_muted() const { return is_output_muted_.load(); }
+    void set_input_muted(bool muted) { is_input_muted_.store(muted); }
+    bool is_input_muted() const { return is_input_muted_.load(); }
+
     // Audio Output / TX Queue
     bool queue_tx_samples(const float* samples, size_t count);
+    size_t pull_tx_samples(float* output, size_t count);
     bool is_tx_active() const;
     void abort_tx();
+
+    // Audio Playback (for recorded transmissions)
+    bool play_audio_file(const std::string& path);
+    void pause_audio_playback();
+    void resume_audio_playback();
+    void stop_audio_playback();
+    bool is_audio_playing() const;
+    float get_audio_playback_position() const;
+    float get_audio_playback_duration() const;
+    void seek_audio_playback(float seconds);
+    size_t pull_playback_samples(float* output, size_t count);
 
     // Simulation / Direct injection (for testing)
     void inject_rx_samples(const float* samples, size_t count);
@@ -122,8 +141,20 @@ private:
     std::atomic<bool> is_transmitting_{false};
     mutable std::mutex tx_mutex_;
 
+    // Recorded audio playback buffer
+    std::vector<float> playback_buffer_;
+    size_t playback_index_{0};
+    std::atomic<bool> is_playback_active_{false};
+    std::atomic<bool> is_playback_paused_{false};
+    mutable std::mutex playback_mutex_;
+
+    // Mute flags
+    std::atomic<bool> is_output_muted_{false};
+    std::atomic<bool> is_input_muted_{false};
+
     // Real-time FFT snapshot
     std::vector<float> latest_fft_magnitudes_;
+    std::vector<float> fft_accum_buffer_;
     std::mutex fft_mutex_;
 
     // Miniaudio device handle pointer (void* to avoid exposing miniaudio in header)

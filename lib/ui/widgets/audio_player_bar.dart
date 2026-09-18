@@ -1,4 +1,7 @@
+import 'dart:io';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:path/path.dart' as p;
 import '../../audio/audio_playback_service.dart';
 
 class AudioPlayerBar extends StatelessWidget {
@@ -77,7 +80,7 @@ class AudioPlayerBar extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          _formatDuration(Duration(milliseconds: durationMs)),
+                          _formatDuration(Duration(milliseconds: _getRealDurationMs())),
                           style: const TextStyle(
                             fontSize: 10,
                             color: Colors.white60,
@@ -89,11 +92,65 @@ class AudioPlayerBar extends StatelessWidget {
                   ],
                 ),
               ),
+              const SizedBox(width: 8),
+              IconButton(
+                iconSize: 18,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+                tooltip: "Export Audio (.wav)",
+                icon: const Icon(Icons.download_rounded, color: Colors.cyanAccent),
+                onPressed: () => _exportAudio(context),
+              ),
             ],
           ),
         );
       },
     );
+  }
+
+  Future<void> _exportAudio(BuildContext context) async {
+    final file = File(audioFilePath);
+    if (!file.existsSync()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Audio file not found on disk.')),
+      );
+      return;
+    }
+    final suggestedName = p.basename(audioFilePath);
+    try {
+      final bytes = await file.readAsBytes();
+      final resultUri = await FilePicker.saveFile(
+        dialogTitle: 'Export Audio (.wav)',
+        fileName: suggestedName.isNotEmpty ? suggestedName : 'transmission.wav',
+        bytes: bytes,
+        type: FileType.custom,
+        allowedExtensions: ['wav'],
+      );
+      if (resultUri != null && context.mounted) {
+        final displayName = p.basename(resultUri.path);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Audio exported to $displayName')),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Export failed: $e')),
+        );
+      }
+    }
+  }
+
+  int _getRealDurationMs() {
+    try {
+      final file = File(audioFilePath);
+      if (file.existsSync()) {
+        final bytes = file.lengthSync();
+        final dataBytes = bytes > 44 ? bytes - 44 : bytes;
+        return (dataBytes / 96000.0 * 1000).toInt();
+      }
+    } catch (_) {}
+    return durationMs;
   }
 
   String _formatDuration(Duration d) {

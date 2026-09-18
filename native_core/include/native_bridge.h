@@ -29,6 +29,10 @@ DART_EXPORT void Native_SetLoopbackMode(bool enabled);
 DART_EXPORT void Native_SetSquelchThreshold(float threshold_db);
 DART_EXPORT float Native_GetSquelchLevel();
 DART_EXPORT bool Native_IsSquelchOpen();
+DART_EXPORT void Native_SetOutputMuted(bool muted);
+DART_EXPORT bool Native_IsOutputMuted();
+DART_EXPORT void Native_SetInputMuted(bool muted);
+DART_EXPORT bool Native_IsInputMuted();
 
 // 3. Transmission & Synthesis
 DART_EXPORT bool Native_StartTransmit(
@@ -37,8 +41,19 @@ DART_EXPORT bool Native_StartTransmit(
     size_t payload_len,
     const char* json_config
 );
+DART_EXPORT void Native_ConfigureModem(const char* modem_id, const char* json_config);
 DART_EXPORT bool Native_IsTransmitting();
 DART_EXPORT void Native_AbortTransmit();
+
+// 3b. Audio File Playback (Recorded Transmissions)
+DART_EXPORT bool Native_PlayAudioFile(const char* path);
+DART_EXPORT void Native_PauseAudioPlayback();
+DART_EXPORT void Native_ResumeAudioPlayback();
+DART_EXPORT void Native_StopAudioPlayback();
+DART_EXPORT bool Native_IsAudioPlaying();
+DART_EXPORT float Native_GetAudioPlaybackPosition();
+DART_EXPORT float Native_GetAudioPlaybackDuration();
+DART_EXPORT void Native_SeekAudioPlayback(float seconds);
 
 // 4. Shared Canvas Framebuffer (Zero-Copy 640x496 RGBA32)
 DART_EXPORT uint8_t* Native_GetSharedCanvasPtr();

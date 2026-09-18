@@ -59,6 +59,38 @@ class Transmission {
     this.isIdentified = true,
   });
 
+  Transmission copyWith({
+    String? id,
+    int? timestamp,
+    TransmissionDirection? direction,
+    String? protocolId,
+    String? protocolDisplayName,
+    PayloadType? payloadType,
+    String? textContent,
+    String? imageFilePath,
+    Uint8List? rawPayload,
+    double? snrDb,
+    int? durationMs,
+    String? audioFilePath,
+    bool? isIdentified,
+  }) {
+    return Transmission(
+      id: id ?? this.id,
+      timestamp: timestamp ?? this.timestamp,
+      direction: direction ?? this.direction,
+      protocolId: protocolId ?? this.protocolId,
+      protocolDisplayName: protocolDisplayName ?? this.protocolDisplayName,
+      payloadType: payloadType ?? this.payloadType,
+      textContent: textContent ?? this.textContent,
+      imageFilePath: imageFilePath ?? this.imageFilePath,
+      rawPayload: rawPayload ?? this.rawPayload,
+      snrDb: snrDb ?? this.snrDb,
+      durationMs: durationMs ?? this.durationMs,
+      audioFilePath: audioFilePath ?? this.audioFilePath,
+      isIdentified: isIdentified ?? this.isIdentified,
+    );
+  }
+
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -77,21 +109,46 @@ class Transmission {
     };
   }
 
-  factory Transmission.fromMap(Map<String, dynamic> map) {
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'timestamp': timestamp,
+      'direction': direction.name,
+      'protocolId': protocolId,
+      'protocolDisplayName': protocolDisplayName,
+      'payloadType': payloadType.name,
+      'textContent': textContent,
+      'imageFilePath': imageFilePath,
+      'rawPayload': rawPayload?.toList(),
+      'snrDb': snrDb,
+      'durationMs': durationMs,
+      'audioFilePath': audioFilePath,
+      'isIdentified': isIdentified,
+    };
+  }
+
+  factory Transmission.fromJson(Map<String, dynamic> json) {
     return Transmission(
-      id: map['id'] as String,
-      timestamp: map['timestamp'] as int,
-      direction: TransmissionDirection.fromInt(map['direction'] as int),
-      protocolId: map['protocol_id'] as String,
-      protocolDisplayName: map['protocol_display_name'] as String,
-      payloadType: PayloadType.fromInt(map['payload_type'] as int),
-      textContent: map['text_content'] as String?,
-      imageFilePath: map['image_file_path'] as String?,
-      rawPayload: map['raw_payload'] as Uint8List?,
-      snrDb: (map['snr_db'] as num?)?.toDouble(),
-      durationMs: map['duration_ms'] as int,
-      audioFilePath: map['audio_file_path'] as String,
-      isIdentified: (map['is_identified'] as int? ?? 1) == 1,
+      id: json['id'] as String,
+      timestamp: json['timestamp'] as int,
+      direction: json['direction'] == 'tx'
+          ? TransmissionDirection.tx
+          : TransmissionDirection.rx,
+      protocolId: json['protocolId'] as String,
+      protocolDisplayName: json['protocolDisplayName'] as String,
+      payloadType: PayloadType.values.firstWhere(
+        (e) => e.name == json['payloadType'],
+        orElse: () => PayloadType.unknown,
+      ),
+      textContent: json['textContent'] as String?,
+      imageFilePath: json['imageFilePath'] as String?,
+      rawPayload: json['rawPayload'] != null
+          ? Uint8List.fromList(List<int>.from(json['rawPayload'] as List))
+          : null,
+      snrDb: (json['snrDb'] as num?)?.toDouble(),
+      durationMs: json['durationMs'] as int,
+      audioFilePath: json['audioFilePath'] as String? ?? '',
+      isIdentified: json['isIdentified'] as bool? ?? true,
     );
   }
 }
@@ -102,13 +159,33 @@ class StationSettings {
   final String fipsCountyCode;
   final double squelchThresholdDb;
   final bool isLoopbackEnabled;
+  final int rattlegramCarrierFreq;
+  final double rattlegramSensitivity;
+  final String rattlegramMode;
+  final int feldHellCarrierFreq;
+  final String feldHellMode;
+  final String easOriginator;
+  final String easEventCode;
+  final double cwPitch;
+  final double cwWpm;
+  final String sstvMode;
 
   const StationSettings({
     this.callsign,
     this.stationSymbol = "/-",
     this.fipsCountyCode = "000000",
     this.squelchThresholdDb = -45.0,
-    this.isLoopbackEnabled = true,
+    this.isLoopbackEnabled = false,
+    this.rattlegramCarrierFreq = 1700,
+    this.rattlegramSensitivity = 0.42,
+    this.rattlegramMode = 'mode14',
+    this.feldHellCarrierFreq = 980,
+    this.feldHellMode = 'ook',
+    this.easOriginator = 'EAS',
+    this.easEventCode = 'RWT',
+    this.cwPitch = 700.0,
+    this.cwWpm = 20.0,
+    this.sstvMode = 'robot36',
   });
 
   StationSettings copyWith({
@@ -118,6 +195,16 @@ class StationSettings {
     String? fipsCountyCode,
     double? squelchThresholdDb,
     bool? isLoopbackEnabled,
+    int? rattlegramCarrierFreq,
+    double? rattlegramSensitivity,
+    String? rattlegramMode,
+    int? feldHellCarrierFreq,
+    String? feldHellMode,
+    String? easOriginator,
+    String? easEventCode,
+    double? cwPitch,
+    double? cwWpm,
+    String? sstvMode,
   }) {
     return StationSettings(
       callsign: clearCallsign ? null : (callsign ?? this.callsign),
@@ -125,6 +212,16 @@ class StationSettings {
       fipsCountyCode: fipsCountyCode ?? this.fipsCountyCode,
       squelchThresholdDb: squelchThresholdDb ?? this.squelchThresholdDb,
       isLoopbackEnabled: isLoopbackEnabled ?? this.isLoopbackEnabled,
+      rattlegramCarrierFreq: rattlegramCarrierFreq ?? this.rattlegramCarrierFreq,
+      rattlegramSensitivity: rattlegramSensitivity ?? this.rattlegramSensitivity,
+      rattlegramMode: rattlegramMode ?? this.rattlegramMode,
+      feldHellCarrierFreq: feldHellCarrierFreq ?? this.feldHellCarrierFreq,
+      feldHellMode: feldHellMode ?? this.feldHellMode,
+      easOriginator: easOriginator ?? this.easOriginator,
+      easEventCode: easEventCode ?? this.easEventCode,
+      cwPitch: cwPitch ?? this.cwPitch,
+      cwWpm: cwWpm ?? this.cwWpm,
+      sstvMode: sstvMode ?? this.sstvMode,
     );
   }
 

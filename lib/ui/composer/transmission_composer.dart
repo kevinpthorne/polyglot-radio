@@ -1,7 +1,11 @@
+import 'dart:typed_data';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:path/path.dart' as p;
 import '../../core/modem_coordinator.dart';
 import '../../plugins/modem_plugin.dart';
 import '../settings/station_settings_dialog.dart';
+import '../settings/modem_params_dialog.dart';
 import 'protocol_picker_sheet.dart';
 
 class TransmissionComposer extends StatefulWidget {
@@ -15,6 +19,7 @@ class _TransmissionComposerState extends State<TransmissionComposer> {
   final TextEditingController _textController = TextEditingController();
   late ModemProtocolPlugin _selectedPlugin;
   String? _selectedImagePath;
+  bool _isHexMode = false;
 
   @override
   void initState() {
@@ -28,6 +33,97 @@ class _TransmissionComposerState extends State<TransmissionComposer> {
   void dispose() {
     _textController.dispose();
     super.dispose();
+  }
+
+  Uint8List? _parseHex(String text) {
+    final cleaned = text.replaceAll(RegExp(r'\s+|0x|,|:'), '');
+    if (cleaned.isEmpty) return Uint8List(0);
+    if (cleaned.length % 2 != 0) return null;
+    try {
+      final result = Uint8List(cleaned.length ~/ 2);
+      for (int i = 0; i < cleaned.length; i += 2) {
+        result[i ~/ 2] = int.parse(cleaned.substring(i, i + 2), radix: 16);
+      }
+      return result;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> _pickImageFile() async {
+    try {
+      final files = await FilePicker.pickFiles(
+        type: FileType.image,
+        dialogTitle: 'Select Image for SSTV / WEFAX',
+      );
+      if (files.isNotEmpty && files.first.path != null) {
+        final path = files.first.path!;
+        setState(() {
+          _selectedImagePath = path;
+          if (_selectedPlugin.category != PayloadCategory.image) {
+            _selectedPlugin = PluginRegistry.instance.get('sstv_martin1') ??
+                PluginRegistry.instance.get('wefax_576') ??
+                _selectedPlugin;
+          }
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Could not open file picker: $e")),
+        );
+      }
+    }
+  }
+
+  void _enterImagePathDialog() {
+    final controller = TextEditingController(text: _selectedImagePath ?? '');
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF161B22),
+        title: const Text("Enter Image File Path",
+            style: TextStyle(color: Colors.white, fontSize: 16)),
+        content: TextField(
+          controller: controller,
+          style: const TextStyle(
+              color: Colors.white, fontFamily: 'monospace', fontSize: 13),
+          decoration: const InputDecoration(
+            hintText: "/path/to/image.png",
+            hintStyle: TextStyle(color: Colors.white30),
+            enabledBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: Colors.white24)),
+            focusedBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: Colors.cyanAccent)),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child:
+                const Text("Cancel", style: TextStyle(color: Colors.white60)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final path = controller.text.trim();
+              if (path.isNotEmpty) {
+                setState(() {
+                  _selectedImagePath = path;
+                  if (_selectedPlugin.category != PayloadCategory.image) {
+                    _selectedPlugin =
+                        PluginRegistry.instance.get('sstv_martin1') ??
+                            PluginRegistry.instance.get('wefax_576') ??
+                            _selectedPlugin;
+                  }
+                });
+              }
+              Navigator.pop(ctx);
+            },
+            child: const Text("Apply"),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showProtocolPicker() {
@@ -49,7 +145,23 @@ class _TransmissionComposerState extends State<TransmissionComposer> {
 
   Future<void> _handleTransmit() async {
     final text = _textController.text.trim();
-    if (text.isEmpty && _selectedImagePath == null) {
+    Uint8List? rawBytes;
+    if (_isHexMode && text.isNotEmpty) {
+      final parsed = _parseHex(text);
+      if (parsed == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+                "Invalid hexadecimal format. Enter hex pairs e.g. '01 A4 FF'."),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+        return;
+      }
+      rawBytes = parsed;
+    }
+
+    if (text.isEmpty && _selectedImagePath == null && rawBytes == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("Enter a message or attach an image to transmit."),
@@ -91,6 +203,7 @@ class _TransmissionComposerState extends State<TransmissionComposer> {
       final success = await coordinator.transmit(
         protocolId: _selectedPlugin.id,
         text: text,
+        rawBytes: rawBytes,
         imageFilePath: _selectedImagePath,
       );
 
@@ -161,18 +274,41 @@ class _TransmissionComposerState extends State<TransmissionComposer> {
             ),
             const SizedBox(height: 12),
             ListTile(
+              leading: const Icon(Icons.file_upload, color: Colors.cyanAccent),
+              title: const Text("Choose Image File...",
+                  style: TextStyle(color: Colors.white)),
+              subtitle: const Text("Select PNG, JPG, or BMP from disk",
+                  style: TextStyle(color: Colors.white60, fontSize: 11)),
+              onTap: () {
+                Navigator.pop(ctx);
+                _pickImageFile();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.edit_note, color: Colors.blueAccent),
+              title: const Text("Enter Image Path...",
+                  style: TextStyle(color: Colors.white)),
+              subtitle: const Text("Specify absolute or relative path to file",
+                  style: TextStyle(color: Colors.white60, fontSize: 11)),
+              onTap: () {
+                Navigator.pop(ctx);
+                _enterImagePathDialog();
+              },
+            ),
+            ListTile(
               leading: const Icon(Icons.grid_on, color: Colors.tealAccent),
               title: const Text("Use Standard Color Test Pattern",
                   style: TextStyle(color: Colors.white)),
-              subtitle: const Text("Generates calibration color bars for SSTV",
+              subtitle: const Text("Generates calibration color bars for SSTV / WEFAX",
                   style: TextStyle(color: Colors.white60, fontSize: 11)),
               onTap: () {
                 setState(() {
                   _selectedImagePath = "synthetic_color_bars.png";
-                  final sstv = PluginRegistry.instance.get('sstv_martin1') ??
-                      PluginRegistry.instance.get('sstv_scottie1') ??
-                      _selectedPlugin;
-                  _selectedPlugin = sstv;
+                  if (_selectedPlugin.category != PayloadCategory.image) {
+                    _selectedPlugin = PluginRegistry.instance.get('sstv_martin1') ??
+                        PluginRegistry.instance.get('wefax_576') ??
+                        _selectedPlugin;
+                  }
                 });
                 Navigator.pop(ctx);
               },
@@ -270,6 +406,20 @@ class _TransmissionComposerState extends State<TransmissionComposer> {
                             ),
                           ),
                         ),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          iconSize: 18,
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          tooltip: "Tweak Modem Parameters",
+                          icon: const Icon(Icons.tune, color: Colors.cyanAccent),
+                          onPressed: () {
+                            showDialog(
+                              context: context,
+                              builder: (ctx) => const ModemParamsDialog(),
+                            );
+                          },
+                        ),
                         if (needsCallsign) ...[
                           const SizedBox(width: 8),
                           GestureDetector(
@@ -307,6 +457,45 @@ class _TransmissionComposerState extends State<TransmissionComposer> {
                           ),
                         ],
                         const Spacer(),
+                        // HEX / TXT mode toggle
+                        InkWell(
+                          onTap: isTx
+                              ? null
+                              : () {
+                                  setState(() {
+                                    _isHexMode = !_isHexMode;
+                                  });
+                                },
+                          borderRadius: BorderRadius.circular(4),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: _isHexMode
+                                  ? Colors.purpleAccent.withOpacity(0.2)
+                                  : const Color(0xFF21262D),
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(
+                                color: _isHexMode
+                                    ? Colors.purpleAccent
+                                    : Colors.white24,
+                                width: 0.8,
+                              ),
+                            ),
+                            child: Text(
+                              _isHexMode ? "HEX" : "TXT",
+                              style: TextStyle(
+                                fontFamily: 'monospace',
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: _isHexMode
+                                    ? Colors.purpleAccent
+                                    : Colors.white60,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
                         // Image attachment preview / button
                         if (_selectedImagePath != null) ...[
                           Container(
@@ -322,9 +511,11 @@ class _TransmissionComposerState extends State<TransmissionComposer> {
                                 const Icon(Icons.image,
                                     size: 12, color: Colors.tealAccent),
                                 const SizedBox(width: 4),
-                                const Text(
-                                  "TEST PATTERN",
-                                  style: TextStyle(
+                                Text(
+                                  _selectedImagePath == "synthetic_color_bars.png"
+                                      ? "TEST PATTERN"
+                                      : p.basename(_selectedImagePath!),
+                                  style: const TextStyle(
                                       color: Colors.tealAccent, fontSize: 9),
                                 ),
                                 const SizedBox(width: 4),
@@ -385,10 +576,12 @@ class _TransmissionComposerState extends State<TransmissionComposer> {
                                 fontFamily: 'monospace',
                               ),
                               decoration: InputDecoration(
-                                hintText: _selectedPlugin.category ==
-                                        PayloadCategory.image
-                                    ? "Add caption or text overlay..."
-                                    : "Type message to transmit via ${_selectedPlugin.displayName}...",
+                                hintText: _isHexMode
+                                    ? "Enter hex bytes (e.g. 48 65 6C 6C 6F or DEADBE)..."
+                                    : (_selectedPlugin.category ==
+                                            PayloadCategory.image
+                                        ? "Add caption or text overlay..."
+                                        : "Type message to transmit via ${_selectedPlugin.displayName}..."),
                                 hintStyle: const TextStyle(
                                   color: Colors.white30,
                                   fontSize: 12,

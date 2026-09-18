@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import '../core/ffi_bindings.dart';
 
 enum AudioPlaybackState {
   stopped,
@@ -27,14 +28,14 @@ class AudioPlaybackService extends ChangeNotifier {
 
   Future<void> play(String filePath) async {
     final file = File(filePath);
-    if (!file.existsSync()) {
-      // In simulation or test mode
-      _duration = const Duration(seconds: 3);
-    } else {
+    if (file.existsSync()) {
       final bytes = file.lengthSync();
-      // 48 kHz 16-bit mono = 96,000 bytes per second
-      final seconds = bytes / 96000.0;
+      // 48 kHz 16-bit mono = 96,000 bytes per second (subtract 44 bytes header)
+      final dataBytes = bytes > 44 ? bytes - 44 : bytes;
+      final seconds = dataBytes / 96000.0;
       _duration = Duration(milliseconds: (seconds * 1000).toInt());
+    } else {
+      _duration = const Duration(seconds: 3);
     }
 
     _currentFilePath = filePath;
@@ -42,15 +43,36 @@ class AudioPlaybackService extends ChangeNotifier {
     _state = AudioPlaybackState.playing;
     notifyListeners();
 
+    // Trigger physical playback through native AudioHAL
+    try {
+      PolyglotNativeBindings.instance.playAudioFile(filePath);
+      final nativeDur = PolyglotNativeBindings.instance.getAudioPlaybackDuration();
+      if (nativeDur > 0) {
+        _duration = Duration(milliseconds: (nativeDur * 1000).toInt());
+      }
+    } catch (e) {
+      // In tests or headless environments without native library
+      debugPrint('Native audio playback unavailable: $e');
+    }
+
     _ticker?.cancel();
-    _ticker = Timer.periodic(const Duration(milliseconds: 100), (t) {
+    _ticker = Timer.periodic(const Duration(milliseconds: 50), (t) {
       if (_state == AudioPlaybackState.playing) {
-        _position += const Duration(milliseconds: 100);
-        if (_position >= _duration) {
-          stop();
-        } else {
-          notifyListeners();
+        try {
+          if (!PolyglotNativeBindings.instance.isAudioPlaying()) {
+            stop();
+            return;
+          }
+          final posSec = PolyglotNativeBindings.instance.getAudioPlaybackPosition();
+          _position = Duration(milliseconds: (posSec * 1000).toInt());
+        } catch (_) {
+          _position += const Duration(milliseconds: 50);
+          if (_position >= _duration) {
+            stop();
+            return;
+          }
         }
+        notifyListeners();
       }
     });
   }
@@ -58,6 +80,9 @@ class AudioPlaybackService extends ChangeNotifier {
   void pause() {
     if (_state == AudioPlaybackState.playing) {
       _state = AudioPlaybackState.paused;
+      try {
+        PolyglotNativeBindings.instance.pauseAudioPlayback();
+      } catch (_) {}
       notifyListeners();
     }
   }
@@ -65,6 +90,9 @@ class AudioPlaybackService extends ChangeNotifier {
   void resume() {
     if (_state == AudioPlaybackState.paused) {
       _state = AudioPlaybackState.playing;
+      try {
+        PolyglotNativeBindings.instance.resumeAudioPlayback();
+      } catch (_) {}
       notifyListeners();
     }
   }
@@ -72,6 +100,9 @@ class AudioPlaybackService extends ChangeNotifier {
   void seek(Duration newPosition) {
     _position = newPosition;
     if (_position > _duration) _position = _duration;
+    try {
+      PolyglotNativeBindings.instance.seekAudioPlayback(_position.inMilliseconds / 1000.0);
+    } catch (_) {}
     notifyListeners();
   }
 
@@ -79,6 +110,9 @@ class AudioPlaybackService extends ChangeNotifier {
     _ticker?.cancel();
     _state = AudioPlaybackState.stopped;
     _position = Duration.zero;
+    try {
+      PolyglotNativeBindings.instance.stopAudioPlayback();
+    } catch (_) {}
     notifyListeners();
   }
 }

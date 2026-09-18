@@ -28,5 +28,9 @@
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Polyglot Radio requires microphone access to monitor and demodulate acoustic transmissions in real time.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Polyglot Radio requires photo library access to select images for SSTV and WEFAX transmission.</string>
 </dict>
 </plist>

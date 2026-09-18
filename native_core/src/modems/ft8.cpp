@@ -77,8 +77,23 @@ public:
 
     float check_sentry_confidence(const float* samples, size_t count) override {
         if (count < 512) return 0.0f;
-        float mag = dsp::Goertzel::compute_magnitude(samples, count, center_freq_, static_cast<float>(sample_rate_));
-        return (mag > 0.02f) ? std::min(1.0f, mag * 20.0f) : 0.0f;
+        float mag_center = dsp::Goertzel::compute_magnitude(samples, count, center_freq_, static_cast<float>(sample_rate_));
+        float mag_eas_space = dsp::Goertzel::compute_magnitude(samples, count, 1562.5f, static_cast<float>(sample_rate_));
+        float mag_eas_mark = dsp::Goertzel::compute_magnitude(samples, count, 2083.33f, static_cast<float>(sample_rate_));
+        float mag_aprs_mark = dsp::Goertzel::compute_magnitude(samples, count, 1200.0f, static_cast<float>(sample_rate_));
+        float mag_hell = dsp::Goertzel::compute_magnitude(samples, count, 980.0f, static_cast<float>(sample_rate_));
+
+        // Immediately reject if EAS, APRS, or Feld-Hell tones are present
+        if (mag_eas_space > 0.025f || mag_eas_mark > 0.025f || mag_aprs_mark > 0.025f || mag_hell > 0.025f) {
+            return 0.0f;
+        }
+
+        // Require strong isolated 1500 Hz carrier and limit confidence below 0.50f
+        // so weak HF continuous modes never preempt burst acoustic modems
+        if (mag_center > 0.06f && mag_center > 3.0f * (mag_eas_space + 0.01f)) {
+            return 0.40f;
+        }
+        return 0.0f;
     }
 
     bool prepare_tx(const uint8_t* payload, size_t len, const char* json_config) override {

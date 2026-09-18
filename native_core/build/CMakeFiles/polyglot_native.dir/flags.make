@@ -7,15 +7,15 @@ C_DEFINES = -Dpolyglot_native_EXPORTS
 
 C_INCLUDES = -I/Users/kevint/dev/polyglot-radio/native_core/include -I/Users/kevint/dev/polyglot-radio/native_core/external -F/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks
 
-C_FLAGSarm64 =  -arch arm64 -fPIC
+C_FLAGSarm64 = -O3 -DNDEBUG -arch arm64 -fPIC
 
-C_FLAGS =  -arch arm64 -fPIC
+C_FLAGS = -O3 -DNDEBUG -arch arm64 -fPIC
 
 CXX_DEFINES = -Dpolyglot_native_EXPORTS
 
 CXX_INCLUDES = -I/Users/kevint/dev/polyglot-radio/native_core/include -I/Users/kevint/dev/polyglot-radio/native_core/external -F/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks
 
-CXX_FLAGSarm64 = -std=gnu++20 -arch arm64 -fPIC
+CXX_FLAGSarm64 = -O3 -DNDEBUG -std=gnu++20 -arch arm64 -fPIC
 
-CXX_FLAGS = -std=gnu++20 -arch arm64 -fPIC
+CXX_FLAGS = -O3 -DNDEBUG -std=gnu++20 -arch arm64 -fPIC
 

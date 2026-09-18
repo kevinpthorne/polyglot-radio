@@ -38,6 +38,8 @@ public:
     void set_storage_directory(const std::string& dir) { storage_dir_ = dir; }
     const std::string& get_storage_directory() const { return storage_dir_; }
 
+    void configure_modem(const char* modem_id, const char* json_config);
+
 private:
     SentryCoordinator();
     ~SentryCoordinator();
@@ -57,8 +59,8 @@ private:
     size_t active_burst_samples_{0};
     std::string current_wav_path_;
     void* current_wav_handle_{nullptr}; // drwav*
-
     std::string storage_dir_;
+    std::vector<float> sentry_window_;
     mutable std::mutex coordinator_mutex_;
 };
 

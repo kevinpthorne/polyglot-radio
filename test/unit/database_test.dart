@@ -102,5 +102,100 @@ void main() {
         isIdentified: true,
       ));
     });
+
+    test('clearAll purges all transmissions from database', () {
+      for (int i = 0; i < 5; i++) {
+        database.insertTransmission(Transmission(
+          id: 'tx-purge-$i',
+          timestamp: 1000 + i,
+          direction: TransmissionDirection.rx,
+          protocolId: 'rattlegram',
+          protocolDisplayName: 'Rattlegram (OFDM)',
+          payloadType: PayloadType.text,
+          textContent: 'Purge test $i',
+          snrDb: 15.0,
+          durationMs: 500,
+          audioFilePath: '',
+          isIdentified: true,
+        ));
+      }
+      expect(database.getTransmissions().length, equals(5));
+
+      database.clearAll();
+      expect(database.getTransmissions().length, equals(0));
+    });
+
+    test('Transmission toJson serializes all fields properly for export', () {
+      final tx = Transmission(
+        id: 'tx-json-01',
+        timestamp: 1710000000000,
+        direction: TransmissionDirection.tx,
+        protocolId: 'sstv_martin1',
+        protocolDisplayName: 'SSTV (Martin 1)',
+        payloadType: PayloadType.image,
+        textContent: 'SSTV Test',
+        imageFilePath: '/path/to/test.png',
+        rawPayload: Uint8List.fromList([0xAA, 0xBB]),
+        snrDb: 28.5,
+        durationMs: 114000,
+        audioFilePath: '/audio.wav',
+        isIdentified: true,
+      );
+
+      final jsonMap = tx.toJson();
+      expect(jsonMap['id'], equals('tx-json-01'));
+      expect(jsonMap['timestamp'], equals(1710000000000));
+      expect(jsonMap['direction'], equals('tx'));
+      expect(jsonMap['protocolId'], equals('sstv_martin1'));
+      expect(jsonMap['imageFilePath'], equals('/path/to/test.png'));
+      expect(jsonMap['snrDb'], equals(28.5));
+    });
+
+    test('Fresh database loads default settings with loopback disabled', () {
+      final loaded = database.loadStationSettings();
+      expect(loaded.isLoopbackEnabled, isFalse);
+      expect(loaded.hasValidCallsign, isFalse);
+      expect(loaded.squelchThresholdDb, equals(-45.0));
+    });
+
+    test('Station settings persistence in SQLite survives reload', () {
+      final settings = const StationSettings(
+        callsign: 'W1AW',
+        stationSymbol: '/#',
+        fipsCountyCode: '025001',
+        squelchThresholdDb: -52.0,
+        isLoopbackEnabled: false,
+        rattlegramCarrierFreq: 1500,
+        rattlegramSensitivity: 0.35,
+        rattlegramMode: 'mode15',
+        feldHellCarrierFreq: 1225,
+        feldHellMode: 'fsk240',
+        easOriginator: 'WXR',
+        easEventCode: 'TOR',
+        cwPitch: 650.0,
+        cwWpm: 25.0,
+        sstvMode: 'martin1',
+      );
+
+      database.saveStationSettings(settings);
+
+      final loaded = database.loadStationSettings();
+      expect(loaded.callsign, equals('W1AW'));
+      expect(loaded.hasValidCallsign, isTrue);
+      expect(loaded.stationSymbol, equals('/#'));
+      expect(loaded.fipsCountyCode, equals('025001'));
+      expect(loaded.squelchThresholdDb, closeTo(-52.0, 0.01));
+      expect(loaded.isLoopbackEnabled, isFalse);
+      expect(loaded.rattlegramCarrierFreq, equals(1500));
+      expect(loaded.rattlegramSensitivity, closeTo(0.35, 0.01));
+      expect(loaded.rattlegramMode, equals('mode15'));
+      expect(loaded.feldHellCarrierFreq, equals(1225));
+      expect(loaded.feldHellMode, equals('fsk240'));
+      expect(loaded.easOriginator, equals('WXR'));
+      expect(loaded.easEventCode, equals('TOR'));
+      expect(loaded.cwPitch, closeTo(650.0, 0.01));
+      expect(loaded.cwWpm, closeTo(25.0, 0.01));
+      expect(loaded.sstvMode, equals('martin1'));
+    });
   });
 }

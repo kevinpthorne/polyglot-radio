@@ -52,6 +52,12 @@ class AppDatabase {
       CREATE INDEX IF NOT EXISTS idx_transmissions_timestamp 
       ON transmissions(timestamp DESC);
     ''');
+    db.execute('''
+      CREATE TABLE IF NOT EXISTS station_settings (
+        key TEXT PRIMARY KEY NOT NULL,
+        value TEXT NOT NULL
+      );
+    ''');
   }
 
   void insertTransmission(Transmission t) {
@@ -159,5 +165,80 @@ class AppDatabase {
   void close() {
     _changeController.close();
     db.close();
+  }
+
+  void saveSetting(String key, String value) {
+    final stmt = db.prepare('''
+      INSERT OR REPLACE INTO station_settings (key, value) VALUES (?, ?)
+    ''');
+    stmt.execute([key, value]);
+  }
+
+  String? getSetting(String key) {
+    final rs = db.select('SELECT value FROM station_settings WHERE key = ?', [key]);
+    if (rs.isEmpty) return null;
+    return rs.first['value'] as String?;
+  }
+
+  void saveStationSettings(StationSettings settings) {
+    saveSetting('callsign', settings.callsign ?? '');
+    saveSetting('station_symbol', settings.stationSymbol);
+    saveSetting('fips_county_code', settings.fipsCountyCode);
+    saveSetting('squelch_threshold_db', settings.squelchThresholdDb.toString());
+    saveSetting('is_loopback_enabled', settings.isLoopbackEnabled ? '1' : '0');
+    saveSetting('rattlegram_carrier_freq', settings.rattlegramCarrierFreq.toString());
+    saveSetting('rattlegram_sensitivity', settings.rattlegramSensitivity.toString());
+    saveSetting('rattlegram_mode', settings.rattlegramMode);
+    saveSetting('feld_hell_carrier_freq', settings.feldHellCarrierFreq.toString());
+    saveSetting('feld_hell_mode', settings.feldHellMode);
+    saveSetting('eas_originator', settings.easOriginator);
+    saveSetting('eas_event_code', settings.easEventCode);
+    saveSetting('cw_pitch', settings.cwPitch.toString());
+    saveSetting('cw_wpm', settings.cwWpm.toString());
+    saveSetting('sstv_mode', settings.sstvMode);
+  }
+
+  StationSettings loadStationSettings() {
+    final rawCallsign = getSetting('callsign');
+    final callsign = (rawCallsign != null && rawCallsign.isNotEmpty) ? rawCallsign : null;
+    final symbol = getSetting('station_symbol') ?? '/-';
+    final fips = getSetting('fips_county_code') ?? '000000';
+    final squelchStr = getSetting('squelch_threshold_db');
+    final squelch = squelchStr != null ? (double.tryParse(squelchStr) ?? -45.0) : -45.0;
+    final loopbackStr = getSetting('is_loopback_enabled');
+    final loopback = loopbackStr != null && (loopbackStr == '1');
+    final rCarrierStr = getSetting('rattlegram_carrier_freq');
+    final rCarrier = rCarrierStr != null ? (int.tryParse(rCarrierStr) ?? 1700) : 1700;
+    final rSensStr = getSetting('rattlegram_sensitivity');
+    final rSens = rSensStr != null ? (double.tryParse(rSensStr) ?? 0.42) : 0.42;
+    final rMode = getSetting('rattlegram_mode') ?? 'mode14';
+    final hellCarrierStr = getSetting('feld_hell_carrier_freq');
+    final hellCarrier = hellCarrierStr != null ? (int.tryParse(hellCarrierStr) ?? 980) : 980;
+    final hellMode = getSetting('feld_hell_mode') ?? 'ook';
+    final easOrg = getSetting('eas_originator') ?? 'EAS';
+    final easEvt = getSetting('eas_event_code') ?? 'RWT';
+    final cwPitchStr = getSetting('cw_pitch');
+    final cwPitch = cwPitchStr != null ? (double.tryParse(cwPitchStr) ?? 700.0) : 700.0;
+    final cwWpmStr = getSetting('cw_wpm');
+    final cwWpm = cwWpmStr != null ? (double.tryParse(cwWpmStr) ?? 20.0) : 20.0;
+    final sstvMode = getSetting('sstv_mode') ?? 'robot36';
+
+    return StationSettings(
+      callsign: callsign,
+      stationSymbol: symbol,
+      fipsCountyCode: fips,
+      squelchThresholdDb: squelch,
+      isLoopbackEnabled: loopback,
+      rattlegramCarrierFreq: rCarrier,
+      rattlegramSensitivity: rSens,
+      rattlegramMode: rMode,
+      feldHellCarrierFreq: hellCarrier,
+      feldHellMode: hellMode,
+      easOriginator: easOrg,
+      easEventCode: easEvt,
+      cwPitch: cwPitch,
+      cwWpm: cwWpm,
+      sstvMode: sstvMode,
+    );
   }
 }

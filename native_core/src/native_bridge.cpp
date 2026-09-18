@@ -104,13 +104,34 @@ DART_EXPORT bool Native_IsSquelchOpen() {
     return hal::AudioHAL::get().is_squelch_open();
 }
 
+DART_EXPORT void Native_SetOutputMuted(bool muted) {
+    hal::AudioHAL::get().set_output_muted(muted);
+}
+
+DART_EXPORT bool Native_IsOutputMuted() {
+    return hal::AudioHAL::get().is_output_muted();
+}
+
+DART_EXPORT void Native_SetInputMuted(bool muted) {
+    hal::AudioHAL::get().set_input_muted(muted);
+}
+
+DART_EXPORT bool Native_IsInputMuted() {
+    return hal::AudioHAL::get().is_input_muted();
+}
+
 DART_EXPORT bool Native_StartTransmit(
     const char* protocol_id,
     const uint8_t* payload,
     size_t payload_len,
     const char* json_config
 ) {
-    if (!protocol_id || !payload || payload_len == 0) return false;
+    if (!protocol_id) return false;
+    static const uint8_t s_dummy_byte = 0;
+    if (!payload || payload_len == 0) {
+        payload = &s_dummy_byte;
+        payload_len = 1;
+    }
 
     auto modem = ModemRegistry::get().instantiate(protocol_id);
     if (!modem) return false;
@@ -133,12 +154,51 @@ DART_EXPORT bool Native_StartTransmit(
     return hal::AudioHAL::get().queue_tx_samples(full_tx.data(), full_tx.size());
 }
 
+DART_EXPORT void Native_ConfigureModem(const char* modem_id, const char* json_config) {
+    if (modem_id) {
+        core::SentryCoordinator::get().configure_modem(modem_id, json_config);
+    }
+}
+
 DART_EXPORT bool Native_IsTransmitting() {
     return hal::AudioHAL::get().is_tx_active();
 }
 
 DART_EXPORT void Native_AbortTransmit() {
     hal::AudioHAL::get().abort_tx();
+}
+
+DART_EXPORT bool Native_PlayAudioFile(const char* path) {
+    if (!path) return false;
+    return hal::AudioHAL::get().play_audio_file(path);
+}
+
+DART_EXPORT void Native_PauseAudioPlayback() {
+    hal::AudioHAL::get().pause_audio_playback();
+}
+
+DART_EXPORT void Native_ResumeAudioPlayback() {
+    hal::AudioHAL::get().resume_audio_playback();
+}
+
+DART_EXPORT void Native_StopAudioPlayback() {
+    hal::AudioHAL::get().stop_audio_playback();
+}
+
+DART_EXPORT bool Native_IsAudioPlaying() {
+    return hal::AudioHAL::get().is_audio_playing();
+}
+
+DART_EXPORT float Native_GetAudioPlaybackPosition() {
+    return hal::AudioHAL::get().get_audio_playback_position();
+}
+
+DART_EXPORT float Native_GetAudioPlaybackDuration() {
+    return hal::AudioHAL::get().get_audio_playback_duration();
+}
+
+DART_EXPORT void Native_SeekAudioPlayback(float seconds) {
+    hal::AudioHAL::get().seek_audio_playback(seconds);
 }
 
 DART_EXPORT uint8_t* Native_GetSharedCanvasPtr() {

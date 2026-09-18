@@ -1,1 +1,1 @@
-/usr/bin/c++  -arch arm64 -Wl,-search_paths_first -Wl,-headerpad_max_install_names CMakeFiles/sentry_tests.dir/tests/test_sentry_correlator.cpp.o -o sentry_tests  -Wl,-rpath,/Users/kevint/dev/polyglot-radio/native_core/build libpolyglot_native.dylib
+/usr/bin/c++ -O3 -DNDEBUG -arch arm64 -Wl,-search_paths_first -Wl,-headerpad_max_install_names CMakeFiles/sentry_tests.dir/tests/test_sentry_correlator.cpp.o -o sentry_tests  -Wl,-rpath,/Users/kevint/dev/polyglot-radio/native_core/build libpolyglot_native.dylib

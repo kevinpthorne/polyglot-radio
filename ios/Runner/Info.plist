@@ -66,5 +66,15 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Polyglot Radio requires microphone access to monitor and demodulate acoustic transmissions in real time.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Polyglot Radio requires photo library access to select images for SSTV and WEFAX transmission.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Polyglot Radio requires permission to save received SSTV/WEFAX images to your photos.</string>
+	<key>UIFileSharingEnabled</key>
+	<true/>
+	<key>LSSupportsOpeningDocumentsInPlace</key>
+	<true/>
 </dict>
 </plist>

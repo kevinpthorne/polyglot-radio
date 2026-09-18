@@ -31,12 +31,39 @@ public:
         tx_playback_pos_ = 0;
     }
 
+    bool is_rx_active() const override {
+        return state_ == State::ActiveDemodulation;
+    }
+
+    size_t get_max_burst_samples() const override {
+        return static_cast<size_t>(sample_rate_ * 300); // 5 minutes for WEFAX
+    }
+
+    float detect_instantaneous_frequency(float s) {
+        sample_idx_++;
+        if ((prev_s_ <= 0.0f && s > 0.0f) || (prev_s_ >= 0.0f && s < 0.0f)) {
+            float frac = (s != prev_s_) ? (-prev_s_) / (s - prev_s_) : 0.5f;
+            float cross_idx = static_cast<float>(sample_idx_ - 1) + frac;
+            if (last_cross_idx_ > 0.0f) {
+                float half_samples = cross_idx - last_cross_idx_;
+                if (half_samples >= 8.0f && half_samples <= 48.0f) {
+                    float f = static_cast<float>(sample_rate_) / (2.0f * half_samples);
+                    current_freq_ = 0.70f * current_freq_ + 0.30f * f;
+                }
+            }
+            last_cross_idx_ = cross_idx;
+        }
+        prev_s_ = s;
+        return current_freq_;
+    }
+
     void process_rx(const float* samples, size_t count) override {
         uint8_t* canvas = Native_GetSharedCanvasPtr();
 
         for (size_t i = 0; i < count; ++i) {
             float s = samples[i];
             analysis_window_.push_back(s);
+            float inst_freq = detect_instantaneous_frequency(s);
 
             if (analysis_window_.size() >= 512) {
                 if (state_ == State::WaitStartTone) {
@@ -68,8 +95,9 @@ public:
             }
 
             if (state_ == State::ActiveDemodulation) {
-                // Approximate frequency from amplitude
-                float norm_lum = std::clamp(std::abs(s) * 3.0f, 0.0f, 1.0f);
+                // FM Demodulation: 1500 Hz (Black) to 2300 Hz (White)
+                float norm_lum = (inst_freq - 1500.0f) / 800.0f;
+                norm_lum = std::clamp(norm_lum, 0.0f, 1.0f);
                 uint8_t pixel_val = static_cast<uint8_t>(norm_lum * 255.0f);
 
                 int x = static_cast<int>((line_sample_idx_ * 640) / samples_per_line_);
@@ -140,11 +168,18 @@ public:
             append_tone(2300.0f, 0.495f);
         }
 
-        // 3. Image scanlines: 16 lines test sweep
+        // 3. Image scanlines: 16 lines test sweep or user payload
         for (int l = 0; l < 16; ++l) {
             size_t half_line = samples_per_line_ / 2;
             for (size_t s = 0; s < samples_per_line_; ++s) {
-                float freq = (s < half_line) ? 1500.0f : 2300.0f; // Half black, half white
+                float freq;
+                if (payload && len > 1) {
+                    size_t p_idx = (l * 16 + (s * 16 / samples_per_line_)) % len;
+                    uint8_t byte_val = payload[p_idx];
+                    freq = 1500.0f + 800.0f * (static_cast<float>(byte_val) / 255.0f);
+                } else {
+                    freq = (s < half_line) ? 1500.0f : 2300.0f; // Half black, half white
+                }
                 float phase_inc = two_pi * freq / static_cast<float>(sample_rate_);
                 tx_samples_.push_back(0.4f * std::sin(phase));
                 phase += phase_inc;
@@ -191,6 +226,10 @@ private:
     size_t line_sample_idx_{0};
     bool start_tone_detected_{false};
     std::vector<float> analysis_window_;
+    float prev_s_{0.0f};
+    size_t sample_idx_{0};
+    float last_cross_idx_{0.0f};
+    float current_freq_{1900.0f};
 
     bool is_tx_active_{false};
     std::vector<float> tx_samples_;

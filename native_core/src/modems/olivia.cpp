@@ -74,8 +74,26 @@ public:
 
     float check_sentry_confidence(const float* samples, size_t count) override {
         if (count < 512) return 0.0f;
-        float mag = dsp::Goertzel::compute_magnitude(samples, count, center_freq_, static_cast<float>(sample_rate_));
-        return (mag > 0.03f) ? std::min(1.0f, mag * 16.0f) : 0.0f;
+        // Olivia MFSK uses 16 orthogonal tones spread over 500 Hz (from 750 Hz to 1250 Hz)
+        // Check energy across multiple bins. If energy is concentrated in only a single pure tone,
+        // it is a CW carrier or whistle, NOT Olivia MFSK!
+        float max_e = 0.0f;
+        float total_e = 0.0f;
+
+        for (int t = 0; t < tones_; ++t) {
+            float freq = center_freq_ - 250.0f + (t + 0.5f) * tone_spacing_;
+            float e = dsp::Goertzel::compute_energy(samples, count, freq, static_cast<float>(sample_rate_));
+            total_e += e;
+            if (e > max_e) max_e = e;
+        }
+
+        if (total_e < 0.002f) return 0.0f;
+        // Pure single tone -> CW Morse
+        if (max_e > 0.88f * total_e) {
+            return 0.0f;
+        }
+
+        return std::min(1.0f, total_e * 20.0f);
     }
 
     bool prepare_tx(const uint8_t* payload, size_t len, const char* json_config) override {

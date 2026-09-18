@@ -48,4 +48,10 @@ public:
     virtual bool prepare_tx(const uint8_t* payload, size_t len, const char* json_config) = 0;
     virtual size_t pull_tx(float* output, size_t max_samples) = 0;
     virtual bool is_tx_active() const = 0;
+
+    // Reception State & Max Duration
+    virtual bool is_rx_active() const { return false; }
+    virtual size_t get_max_burst_samples() const { return 0; }
+    virtual void flush() {}
+    virtual void configure(const char* json_config) {}
 };
