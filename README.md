@@ -19,17 +19,28 @@
 
 ## 📡 Supported Modem Protocols
 
-1. **SSTV (Slow Scan TV)**: Martin 1/2, Scottie 1/2, Robot 36, and PD-120 analog color sweeps with 1900 Hz sync, 1200 Hz VIS pulse decoding, and FM discrimination.
-2. **Rattlegram (COFDM)**: 88-subcarrier orthogonal frequency-division multiplexing with Schmidl-Cox preamble sync and 1-tap frequency equalizer.
-3. **APRS / AX.25 (Bell 202)**: 1200-baud AFSK (1200/2200 Hz) with non-coherent delay-line discriminator, NRZI destuffing, CRC-16-CCITT, and AX.25 UI frame parsing. *(Requires Amateur Radio Callsign)*
-4. **EAS / SAME**: Emergency Alert System / Specific Area Message Encoding AFSK (2083.3 / 1562.5 Hz, 520.83 baud) with bit synchronization and ZCZC header parsing.
-5. **CW Morse Code**: Continuous wave telegraphy (5–45 WPM) with smoothed envelope follower and Schmitt-trigger symbol decoder.
-6. **PSK31**: Narrowband 31.25-baud BPSK with Costas carrier-recovery loop and official 128-entry G3PLX Varicode codec.
-7. **Feld Hell (Hellschreiber)**: 122.5 Hz dot-matrix facsimile telegraphy rendered directly onto the shared raster canvas.
-8. **Olivia MFSK**: 16-tone multi-frequency shift keying with Hadamard transform correlation detector.
-9. **HF WEFAX (Weather Fax)**: 120 LPM maritime weather facsimile demodulator with line synchronization.
-10. **FT8**: Weak-signal 8-GFSK with $7\times 7$ Costas arrays and LDPC(174,87) framing.
-11. **Ultrasound (19 kHz Silent)**: Inaudible near-ultrasonic 18.5–19.8 kHz 16-FSK modem with linear chirp preamble and Reed-Solomon RS(15,9) forward error correction over $\text{GF}(2^4)$.
+Polyglot Radio supports 11 analog and digital acoustic waveforms across the audible and near-ultrasound spectrum.
+
+### 📊 Modem Transmit (TX) & Receive (RX) Status Matrix
+
+| Modem Protocol | TX Status | RX Status | Sentry Auto-Detect | Notes & Operational Status |
+| :--- | :---: | :---: | :---: | :--- |
+| **SSTV (Slow Scan TV)** | ✅ Operational | ✅ Operational | ✅ Active | Robot 36, Robot 72, Martin 1/2, Scottie 1/2, PD-120. Real-time line-by-line canvas streaming with VIS sync. |
+| **Ultrasound (19 kHz)** | ✅ Operational | ✅ Operational | ✅ Active | Inaudible 18.5–19.8 kHz 16-FSK with linear chirp preamble and Reed-Solomon RS(15,9) error correction. |
+| **APRS / AX.25 (Bell 202)** | ✅ Operational | ✅ Operational | ✅ Active | 1200-baud Bell 202 AFSK packet framing. TX strictly blocked until legal amateur callsign is configured. |
+| **CW Morse Code** | ✅ Operational | ⚠️ Experimental | ✅ Active | TX 5–45 WPM with smooth envelope. RX operates on clean tones; sensitive to pitch jitter in free air. |
+| **PSK31** | ✅ Operational | ⚠️ Experimental | ⚠️ Fallback | 31.25-baud BPSK with Varicode. Loopback verified; requires precise center frequency lock. |
+| **Olivia MFSK** | ✅ Operational | ⚠️ Experimental | ⚠️ Fallback | 16-tone MFSK with Walsh-Hadamard transform. Loopback verified. |
+| **HF WEFAX** | ✅ Operational | ⚠️ Experimental | ⚠️ Fallback | 120 LPM maritime weather facsimile onto shared 640×496 RGBA canvas. |
+| **FT8** | ✅ Operational | ⚠️ Experimental | ⚠️ Fallback | 8-GFSK Costas array framing. Loopback verified. |
+| **EAS / SAME** | ✅ Operational | ❌ Broken / Inactive | ⚠️ Inactive | TX generates standard SAME headers & dual-tone attention signal. Live acoustic RX detection currently fails. |
+| **Feld-Hell (Hellschreiber)** | ✅ Operational | ❌ Broken / Inactive | ⚠️ Inactive | TX generates 122.5-baud dot-matrix facsimile. Double-trace raster engine implemented, but live RX detection fails. |
+| **Rattlegram (COFDM)** | ⚠️ Experimental | ❌ Tabled | ❌ Disabled | Sentry auto-detection tabled to prevent false triggers. 1st-party app uses 256 subcarriers & Polar codes. |
+
+> **Status Legend:**
+> - ✅ **Operational**: Verified working in both automated test suites and real-world acoustic transmissions.
+> - ⚠️ **Experimental**: Verified in native loopback and synthetic tests; may require manual frequency tuning or direct audio connection.
+> - ❌ **Broken / Tabled**: Live acoustic RX is currently unreliable or tabled to prevent cross-modem sentry interference.
 
 ---
 
