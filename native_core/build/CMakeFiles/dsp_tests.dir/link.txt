@@ -1,0 +1,1 @@
+/usr/bin/c++  -arch arm64 -Wl,-search_paths_first -Wl,-headerpad_max_install_names CMakeFiles/dsp_tests.dir/tests/test_dsp_math.cpp.o -o dsp_tests  -Wl,-rpath,/Users/kevint/dev/polyglot-radio/native_core/build libpolyglot_native.dylib

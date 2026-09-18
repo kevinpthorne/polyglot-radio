@@ -1,0 +1,1 @@
+/usr/bin/c++  -arch arm64 -Wl,-search_paths_first -Wl,-headerpad_max_install_names CMakeFiles/loopback_tests.dir/tests/test_modem_loopbacks.cpp.o -o loopback_tests  -Wl,-rpath,/Users/kevint/dev/polyglot-radio/native_core/build libpolyglot_native.dylib

@@ -1,0 +1,7 @@
+/Users/kevint/dev/polyglot-radio/native_core/build/CMakeFiles/polyglot_native.dir
+/Users/kevint/dev/polyglot-radio/native_core/build/CMakeFiles/dsp_tests.dir
+/Users/kevint/dev/polyglot-radio/native_core/build/CMakeFiles/sentry_tests.dir
+/Users/kevint/dev/polyglot-radio/native_core/build/CMakeFiles/loopback_tests.dir
+/Users/kevint/dev/polyglot-radio/native_core/build/CMakeFiles/test.dir
+/Users/kevint/dev/polyglot-radio/native_core/build/CMakeFiles/edit_cache.dir
+/Users/kevint/dev/polyglot-radio/native_core/build/CMakeFiles/rebuild_cache.dir
