@@ -3,7 +3,7 @@ Pod::Spec.new do |s|
   s.version          = '0.1.0'
   s.summary          = 'Polyglot Radio Acoustic SDR Native C++ Core'
   s.homepage         = 'https://github.com/polyglot-radio'
-  s.license          = { :type => 'MIT' }
+  s.license          = { :type => 'AGPL-3.0', :file => '../LICENSE' }
   s.author           = { 'Polyglot Radio Team' => 'dev@polyglot.radio' }
   s.source           = { :path => '.' }
 

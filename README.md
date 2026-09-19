@@ -95,3 +95,10 @@ The test suite validates:
 ```bash
 flutter run -d macos    # or linux / ios / android
 ```
+
+---
+
+## 📄 License & Privacy
+
+- **License**: Polyglot Radio is licensed under the [GNU Affero General Public License v3.0 (AGPLv3)](LICENSE).
+- **Privacy Policy**: See [PRIVACY_POLICY.md](PRIVACY_POLICY.md) for our zero-data-collection policy.
