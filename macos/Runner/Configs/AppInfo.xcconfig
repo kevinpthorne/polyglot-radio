@@ -8,7 +8,7 @@
 PRODUCT_NAME = polyglot_radio
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.polyglot.polyglotRadio
+PRODUCT_BUNDLE_IDENTIFIER = com.kevinpthorne.polyglot-radio
 
 // The copyright displayed in application information
 PRODUCT_COPYRIGHT = Copyright © 2026 com.polyglot. All rights reserved.

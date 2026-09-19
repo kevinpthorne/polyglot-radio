@@ -21,7 +21,7 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   file_picker_darwin: 4c2b9a50ea44cb3b071381ea0cf48591bdd80251
   Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
-  polyglot_native: e779bed578e227389c4c819c5f60084ecc485de9
+  polyglot_native: 1f2ddbea3a0b7cdbaddeb4548818c44adc77b5dc
 
 PODFILE CHECKSUM: 8804eb0990afcb0efba522e3931e5b785120cecd
 
