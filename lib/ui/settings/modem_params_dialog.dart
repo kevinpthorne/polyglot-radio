@@ -78,12 +78,13 @@ class _ModemParamsDialogState extends State<ModemParamsDialog> {
   Widget build(BuildContext context) {
     return Dialog(
       backgroundColor: const Color(0xFF161B22),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 20),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: const BorderSide(color: Color(0xFF30363D)),
       ),
       child: Container(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(16),
         constraints: const BoxConstraints(maxWidth: 520, maxHeight: 680),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -91,19 +92,24 @@ class _ModemParamsDialogState extends State<ModemParamsDialog> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Row(
-                  children: [
-                    Icon(Icons.tune, color: Colors.cyanAccent, size: 20),
-                    SizedBox(width: 8),
-                    Text(
-                      'Modem Tuning & Parameters',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+                Expanded(
+                  child: Row(
+                    children: const [
+                      Icon(Icons.tune, color: Colors.cyanAccent, size: 20),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Modem Tuning & Parameters',
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
                 IconButton(
                   icon: const Icon(Icons.close, color: Colors.white60, size: 20),

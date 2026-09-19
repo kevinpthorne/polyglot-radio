@@ -337,6 +337,15 @@ class PolyglotNativeBindings {
     } else if (Platform.isAndroid) {
       return DynamicLibrary.open('libpolyglot_native.so');
     } else if (Platform.isIOS) {
+      final candidates = [
+        'polyglot_native.framework/polyglot_native',
+        'Frameworks/polyglot_native.framework/polyglot_native',
+      ];
+      for (final p in candidates) {
+        try {
+          return DynamicLibrary.open(p);
+        } catch (_) {}
+      }
       return DynamicLibrary.process();
     }
     throw UnsupportedError('Unsupported platform: ${Platform.operatingSystem}');

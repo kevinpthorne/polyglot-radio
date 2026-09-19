@@ -65,11 +65,15 @@ class ProtocolPickerSheet extends StatelessWidget {
                   leading: _buildCategoryIcon(plugin.category),
                   title: Row(
                     children: [
-                      Text(
-                        plugin.displayName,
-                        style: TextStyle(
-                          color: isSelected ? Colors.cyanAccent : Colors.white,
-                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      Flexible(
+                        child: Text(
+                          plugin.displayName,
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                          style: TextStyle(
+                            color: isSelected ? Colors.cyanAccent : Colors.white,
+                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                          ),
                         ),
                       ),
                       if (plugin.requiresCallsign) ...[

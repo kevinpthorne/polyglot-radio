@@ -176,18 +176,22 @@ class _AudioImportDialogState extends State<AudioImportDialog> {
 
     return AlertDialog(
       backgroundColor: const Color(0xFF161B22),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 20),
       title: Row(
         children: const [
           Icon(Icons.file_upload_outlined, color: Colors.cyanAccent, size: 20),
           SizedBox(width: 8),
-          Text(
-            "IMPORT AUDIO RECORDING",
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 1.0,
-              fontFamily: 'monospace',
-              color: Colors.cyanAccent,
+          Expanded(
+            child: Text(
+              "IMPORT AUDIO RECORDING",
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.0,
+                fontFamily: 'monospace',
+                color: Colors.cyanAccent,
+              ),
             ),
           ),
         ],

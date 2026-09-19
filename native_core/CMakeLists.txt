@@ -41,22 +41,30 @@ if (APPLE)
         ${AUDIOTOOLBOX_LIB}
         ${CORESERVICES_LIB}
     )
+elseif (ANDROID)
+    target_link_libraries(polyglot_native PRIVATE
+        OpenSLES
+        log
+        m
+    )
 elseif (UNIX AND NOT ANDROID)
     target_link_libraries(polyglot_native PRIVATE pthread dl m)
 endif()
 
-# Build Test Binaries
-enable_testing()
+# Build Test Binaries (Desktop / Host Only)
+if (NOT ANDROID)
+    enable_testing()
 
-add_executable(dsp_tests tests/test_dsp_math.cpp)
-target_link_libraries(dsp_tests PRIVATE polyglot_native)
+    add_executable(dsp_tests tests/test_dsp_math.cpp)
+    target_link_libraries(dsp_tests PRIVATE polyglot_native)
 
-add_executable(sentry_tests tests/test_sentry_correlator.cpp)
-target_link_libraries(sentry_tests PRIVATE polyglot_native)
+    add_executable(sentry_tests tests/test_sentry_correlator.cpp)
+    target_link_libraries(sentry_tests PRIVATE polyglot_native)
 
-add_executable(loopback_tests tests/test_modem_loopbacks.cpp)
-target_link_libraries(loopback_tests PRIVATE polyglot_native)
+    add_executable(loopback_tests tests/test_modem_loopbacks.cpp)
+    target_link_libraries(loopback_tests PRIVATE polyglot_native)
 
-add_test(NAME dsp_tests COMMAND dsp_tests)
-add_test(NAME sentry_tests COMMAND sentry_tests)
-add_test(NAME loopback_tests COMMAND loopback_tests)
+    add_test(NAME dsp_tests COMMAND dsp_tests)
+    add_test(NAME sentry_tests COMMAND sentry_tests)
+    add_test(NAME loopback_tests COMMAND loopback_tests)
+endif()

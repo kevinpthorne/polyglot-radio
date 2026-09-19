@@ -27,6 +27,7 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         backgroundColor: const Color(0xFF161B22),
         elevation: 0,
+        titleSpacing: 8,
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -39,7 +40,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               child: const Icon(Icons.radar, color: Colors.cyanAccent, size: 20),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 8),
             const Flexible(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -48,20 +49,22 @@ class _HomeScreenState extends State<HomeScreen> {
                   Text(
                     "Polyglot Radio: Acoustic SDR",
                     overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
                     style: TextStyle(
-                      fontSize: 15,
+                      fontSize: 14,
                       fontWeight: FontWeight.bold,
-                      letterSpacing: 0.5,
+                      letterSpacing: 0.3,
                       color: Colors.white,
                     ),
                   ),
                   Text(
                     "ACOUSTIC SOFTWARE-DEFINED MODEM",
                     overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
                     style: TextStyle(
-                      fontSize: 8.5,
+                      fontSize: 8,
                       fontFamily: 'monospace',
-                      letterSpacing: 1.0,
+                      letterSpacing: 0.8,
                       color: Colors.cyanAccent,
                     ),
                   ),
@@ -84,8 +87,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   onTap: () => coordinator.toggleOutputMute(),
                   borderRadius: BorderRadius.circular(6),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 3),
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                    margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 2),
                     decoration: BoxDecoration(
                       color: isMuted
                           ? Colors.redAccent.withOpacity(0.2)
@@ -105,7 +108,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           style: TextStyle(
                             fontFamily: 'monospace',
                             fontWeight: FontWeight.bold,
-                            fontSize: 12,
+                            fontSize: 11,
                             letterSpacing: 0.5,
                             color: isMuted ? Colors.redAccent : Colors.cyanAccent,
                             decoration: isMuted ? TextDecoration.lineThrough : null,
@@ -113,10 +116,10 @@ class _HomeScreenState extends State<HomeScreen> {
                             decorationThickness: 2,
                           ),
                         ),
-                        const SizedBox(width: 3),
+                        const SizedBox(width: 2),
                         Icon(
                           isMuted ? Icons.volume_off : Icons.volume_up,
-                          size: 13,
+                          size: 12,
                           color: isMuted ? Colors.redAccent : Colors.cyanAccent,
                         ),
                       ],
@@ -140,8 +143,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   onTap: () => coordinator.toggleInputMute(),
                   borderRadius: BorderRadius.circular(6),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 3),
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                    margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 2),
                     decoration: BoxDecoration(
                       color: isMuted
                           ? Colors.redAccent.withOpacity(0.2)
@@ -161,7 +164,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           style: TextStyle(
                             fontFamily: 'monospace',
                             fontWeight: FontWeight.bold,
-                            fontSize: 12,
+                            fontSize: 11,
                             letterSpacing: 0.5,
                             color: isMuted ? Colors.redAccent : Colors.cyanAccent,
                             decoration: isMuted ? TextDecoration.lineThrough : null,
@@ -169,10 +172,10 @@ class _HomeScreenState extends State<HomeScreen> {
                             decorationThickness: 2,
                           ),
                         ),
-                        const SizedBox(width: 3),
+                        const SizedBox(width: 2),
                         Icon(
                           isMuted ? Icons.mic_off : Icons.mic,
-                          size: 13,
+                          size: 12,
                           color: isMuted ? Colors.redAccent : Colors.cyanAccent,
                         ),
                       ],
@@ -186,10 +189,12 @@ class _HomeScreenState extends State<HomeScreen> {
           // Toggle waterfall view
           IconButton(
             tooltip: _showWaterfall ? "Hide Spectrogram" : "Show Spectrogram",
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
             icon: Icon(
               _showWaterfall ? Icons.waterfall_chart : Icons.waterfall_chart_outlined,
               color: _showWaterfall ? Colors.cyanAccent : Colors.white54,
-              size: 22,
+              size: 20,
             ),
             onPressed: () {
               setState(() {
@@ -200,7 +205,9 @@ class _HomeScreenState extends State<HomeScreen> {
           // Import pre-saved audio recording button
           IconButton(
             tooltip: "Import Audio Recording",
-            icon: const Icon(Icons.file_upload_outlined, color: Colors.cyanAccent, size: 22),
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
+            icon: const Icon(Icons.file_upload_outlined, color: Colors.cyanAccent, size: 20),
             onPressed: () {
               showDialog(
                 context: context,
@@ -211,7 +218,9 @@ class _HomeScreenState extends State<HomeScreen> {
           // Settings button
           IconButton(
             tooltip: "Station Settings",
-            icon: const Icon(Icons.settings_outlined, color: Colors.white70, size: 22),
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
+            icon: const Icon(Icons.settings_outlined, color: Colors.white70, size: 20),
             onPressed: () {
               showDialog(
                 context: context,
@@ -229,7 +238,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
           // Real-time FFT Waterfall Spectrogram
           if (_showWaterfall)
-            const WaterfallView(height: 140),
+            WaterfallView(
+              height: MediaQuery.sizeOf(context).height < 700 ? 110 : 140,
+            ),
 
           // Main Log / Chat Feed
           Expanded(
@@ -249,17 +260,17 @@ class _HomeScreenState extends State<HomeScreen> {
 
                 if (transmissions.isEmpty) {
                   return Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(32),
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
                             Icons.hearing,
-                            size: 48,
+                            size: 38,
                             color: Colors.cyanAccent.withOpacity(0.3),
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 10),
                           const Text(
                             "AWAITING ACOUSTIC SIGNALS",
                             style: TextStyle(
@@ -270,15 +281,15 @@ class _HomeScreenState extends State<HomeScreen> {
                               fontSize: 13,
                             ),
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 6),
                           const Text(
                             "Parallel Sentry is actively monitoring mic input across all 11 modems.\n"
                             "Transmissions will be promoted and decoded automatically.",
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               color: Colors.white38,
-                              fontSize: 12,
-                              height: 1.4,
+                              fontSize: 11.5,
+                              height: 1.35,
                             ),
                           ),
                         ],

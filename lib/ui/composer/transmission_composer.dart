@@ -360,57 +360,62 @@ class _TransmissionComposerState extends State<TransmissionComposer> {
                     // Top strip: Selected protocol badge + attachment indicators
                     Row(
                       children: [
-                        // Protocol selector badge
-                        InkWell(
-                          onTap: isTx ? null : _showProtocolPicker,
-                          borderRadius: BorderRadius.circular(6),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF21262D),
-                              borderRadius: BorderRadius.circular(6),
-                              border: Border.all(
-                                color: needsCallsign
-                                    ? Colors.amber
-                                    : Colors.cyanAccent.withOpacity(0.6),
-                                width: 1,
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.tune,
-                                  size: 14,
+                        // Protocol selector badge (expands to fill left space)
+                        Expanded(
+                          child: InkWell(
+                            onTap: isTx ? null : _showProtocolPicker,
+                            borderRadius: BorderRadius.circular(6),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 7, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF21262D),
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(
                                   color: needsCallsign
                                       ? Colors.amber
-                                      : Colors.cyanAccent,
+                                      : Colors.cyanAccent.withOpacity(0.6),
+                                  width: 1,
                                 ),
-                                const SizedBox(width: 5),
-                                Text(
-                                  _selectedPlugin.displayName.toUpperCase(),
-                                  style: TextStyle(
-                                    fontFamily: 'monospace',
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.bold,
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.tune,
+                                    size: 13,
                                     color: needsCallsign
                                         ? Colors.amber
                                         : Colors.cyanAccent,
                                   ),
-                                ),
-                                const SizedBox(width: 4),
-                                const Icon(Icons.arrow_drop_down,
-                                    size: 16, color: Colors.white54),
-                              ],
+                                  const SizedBox(width: 4),
+                                  Expanded(
+                                    child: Text(
+                                      _selectedPlugin.displayName.toUpperCase(),
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
+                                      style: TextStyle(
+                                        fontFamily: 'monospace',
+                                        fontSize: 10.5,
+                                        fontWeight: FontWeight.bold,
+                                        color: needsCallsign
+                                            ? Colors.amber
+                                            : Colors.cyanAccent,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 2),
+                                  const Icon(Icons.arrow_drop_down,
+                                      size: 16, color: Colors.white54),
+                                ],
+                              ),
                             ),
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 6),
                         IconButton(
-                          iconSize: 18,
+                          iconSize: 17,
                           padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
+                          constraints: const BoxConstraints(minWidth: 26, minHeight: 26),
                           tooltip: "Tweak Modem Parameters",
                           icon: const Icon(Icons.tune, color: Colors.cyanAccent),
                           onPressed: () {
@@ -421,7 +426,7 @@ class _TransmissionComposerState extends State<TransmissionComposer> {
                           },
                         ),
                         if (needsCallsign) ...[
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 6),
                           GestureDetector(
                             onTap: () {
                               showDialog(
@@ -431,7 +436,7 @@ class _TransmissionComposerState extends State<TransmissionComposer> {
                             },
                             child: Container(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 6, vertical: 3),
+                                  horizontal: 5, vertical: 3),
                               decoration: BoxDecoration(
                                 color: Colors.amber.withOpacity(0.15),
                                 borderRadius: BorderRadius.circular(4),
@@ -439,16 +444,18 @@ class _TransmissionComposerState extends State<TransmissionComposer> {
                                     color: Colors.amber.withOpacity(0.5), width: 0.8),
                               ),
                               child: Row(
+                                mainAxisSize: MainAxisSize.min,
                                 children: const [
                                   Icon(Icons.warning_amber_rounded,
                                       size: 12, color: Colors.amber),
-                                  SizedBox(width: 4),
+                                  SizedBox(width: 3),
                                   Text(
-                                    "CALLSIGN REQUIRED",
+                                    "CALL REQ",
                                     style: TextStyle(
                                       color: Colors.amber,
                                       fontSize: 9,
                                       fontWeight: FontWeight.bold,
+                                      fontFamily: 'monospace',
                                     ),
                                   ),
                                 ],
@@ -456,7 +463,7 @@ class _TransmissionComposerState extends State<TransmissionComposer> {
                             ),
                           ),
                         ],
-                        const Spacer(),
+                        const SizedBox(width: 6),
                         // HEX / TXT mode toggle
                         InkWell(
                           onTap: isTx
@@ -495,41 +502,47 @@ class _TransmissionComposerState extends State<TransmissionComposer> {
                             ),
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 6),
                         // Image attachment preview / button
                         if (_selectedImagePath != null) ...[
                           Container(
+                            constraints: const BoxConstraints(maxWidth: 85),
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 6, vertical: 3),
+                                horizontal: 5, vertical: 3),
                             decoration: BoxDecoration(
                               color: Colors.teal.withOpacity(0.2),
                               borderRadius: BorderRadius.circular(4),
                               border: Border.all(color: Colors.tealAccent, width: 0.8),
                             ),
                             child: Row(
+                              mainAxisSize: MainAxisSize.min,
                               children: [
                                 const Icon(Icons.image,
-                                    size: 12, color: Colors.tealAccent),
-                                const SizedBox(width: 4),
-                                Text(
-                                  _selectedImagePath == "synthetic_color_bars.png"
-                                      ? "TEST PATTERN"
-                                      : p.basename(_selectedImagePath!),
-                                  style: const TextStyle(
-                                      color: Colors.tealAccent, fontSize: 9),
+                                    size: 11, color: Colors.tealAccent),
+                                const SizedBox(width: 3),
+                                Flexible(
+                                  child: Text(
+                                    _selectedImagePath == "synthetic_color_bars.png"
+                                        ? "TEST PATTERN"
+                                        : p.basename(_selectedImagePath!),
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 1,
+                                    style: const TextStyle(
+                                        color: Colors.tealAccent, fontSize: 9),
+                                  ),
                                 ),
-                                const SizedBox(width: 4),
+                                const SizedBox(width: 3),
                                 GestureDetector(
                                   onTap: () => setState(() {
                                     _selectedImagePath = null;
                                   }),
                                   child: const Icon(Icons.close,
-                                      size: 12, color: Colors.white70),
+                                      size: 11, color: Colors.white70),
                                 ),
                               ],
                             ),
                           ),
-                          const SizedBox(width: 6),
+                          const SizedBox(width: 4),
                         ],
                         IconButton(
                           icon: Icon(
@@ -539,10 +552,10 @@ class _TransmissionComposerState extends State<TransmissionComposer> {
                             color: _selectedImagePath != null
                                 ? Colors.tealAccent
                                 : Colors.white60,
-                            size: 20,
+                            size: 19,
                           ),
                           padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
+                          constraints: const BoxConstraints(minWidth: 26, minHeight: 26),
                           tooltip: "Attach Image (SSTV/WEFAX)",
                           onPressed: isTx ? null : _showImageOptions,
                         ),

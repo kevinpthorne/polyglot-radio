@@ -20,9 +20,9 @@ class TransmissionBubble extends StatelessWidget {
     return Align(
       alignment: isTx ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.85,
+          maxWidth: (MediaQuery.of(context).size.width * 0.90).clamp(280.0, 560.0),
         ),
         decoration: BoxDecoration(
           color: isTx ? const Color(0xFF1F2E40) : const Color(0xFF1E2228),
@@ -76,7 +76,7 @@ class TransmissionBubble extends StatelessWidget {
 
   Widget _buildHeader(BuildContext context, bool isTx) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: Colors.black.withOpacity(0.2),
         borderRadius: const BorderRadius.only(
@@ -85,50 +85,64 @@ class TransmissionBubble extends StatelessWidget {
         ),
       ),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Icon(
-            isTx ? Icons.arrow_upward : Icons.arrow_downward,
-            size: 13,
-            color: isTx ? Colors.lightBlueAccent : Colors.cyanAccent,
+          Flexible(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  isTx ? Icons.arrow_upward : Icons.arrow_downward,
+                  size: 13,
+                  color: isTx ? Colors.lightBlueAccent : Colors.cyanAccent,
+                ),
+                const SizedBox(width: 5),
+                Flexible(
+                  child: Text(
+                    transmission.protocolDisplayName.toUpperCase(),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                    style: TextStyle(
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.bold,
+                      color: isTx ? Colors.lightBlueAccent : Colors.cyanAccent,
+                      fontFamily: 'monospace',
+                      letterSpacing: 0.4,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
           const SizedBox(width: 6),
-          Text(
-            transmission.protocolDisplayName.toUpperCase(),
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.bold,
-              color: isTx ? Colors.lightBlueAccent : Colors.cyanAccent,
-              fontFamily: 'monospace',
-              letterSpacing: 0.5,
-            ),
-          ),
-          const Spacer(),
-          if (transmission.snrDb != null) ...[
-            Text(
-              "${transmission.snrDb!.toStringAsFixed(1)} dB SNR",
-              style: const TextStyle(
-                fontSize: 10,
-                color: Colors.white60,
-                fontFamily: 'monospace',
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (transmission.snrDb != null) ...[
+                Text(
+                  "${transmission.snrDb!.toStringAsFixed(1)} dB",
+                  style: const TextStyle(
+                    fontSize: 9.5,
+                    color: Colors.white60,
+                    fontFamily: 'monospace',
+                  ),
+                ),
+                const SizedBox(width: 6),
+              ],
+              Text(
+                _formatTimestamp(transmission.timestamp),
+                style: const TextStyle(fontSize: 9.5, color: Colors.white38),
               ),
-            ),
-            const SizedBox(width: 8),
-          ],
-          Text(
-            _formatTimestamp(transmission.timestamp),
-            style: const TextStyle(fontSize: 10, color: Colors.white38),
-          ),
-          if (!isTx &&
-              transmission.audioFilePath.isNotEmpty &&
-              transmission.audioFilePath != 'outbound_tx') ...[
-            const SizedBox(width: 6),
-            PopupMenuButton<String>(
-              tooltip: "Re-classify / Re-demodulate as other modem",
-              icon: const Icon(Icons.alt_route_rounded, size: 16, color: Colors.amberAccent),
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(),
-              color: const Color(0xFF1E293B),
+              if (!isTx &&
+                  transmission.audioFilePath.isNotEmpty &&
+                  transmission.audioFilePath != 'outbound_tx') ...[
+                const SizedBox(width: 4),
+                PopupMenuButton<String>(
+                  tooltip: "Re-classify / Re-demodulate as other modem",
+                  icon: const Icon(Icons.alt_route_rounded, size: 15, color: Colors.amberAccent),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  color: const Color(0xFF1E293B),
               itemBuilder: (ctx) {
                 return PluginRegistry.instance.all.map((p) {
                   return PopupMenuItem<String>(
@@ -189,8 +203,10 @@ class TransmissionBubble extends StatelessWidget {
           ],
         ],
       ),
-    );
-  }
+    ],
+  ),
+);
+}
 
   Widget _buildBody(BuildContext context) {
     if (!transmission.isIdentified || transmission.payloadType == PayloadType.unknown) {

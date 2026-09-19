@@ -1,7 +1,7 @@
 # Polyglot Radio: Universal Acoustic Software-Defined Transceiver & Modem Framework
 
 **Engineering Specification Document**
-**Version:** 1.0.0-PROD
+**Version:** 0.1.0
 
 **Target Platforms:** iOS 16.0+, Android 10.0+ (API Level 29+), macOS 13.0+, Linux (Debian 12+)
 

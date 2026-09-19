@@ -1,0 +1,28 @@
+PODS:
+  - file_picker_darwin (1.0.0):
+    - Flutter
+    - FlutterMacOS
+  - Flutter (1.0.0)
+  - polyglot_native (0.1.0)
+
+DEPENDENCIES:
+  - file_picker_darwin (from `.symlinks/plugins/file_picker_darwin/darwin`)
+  - Flutter (from `Flutter`)
+  - polyglot_native (from `../native_core`)
+
+EXTERNAL SOURCES:
+  file_picker_darwin:
+    :path: ".symlinks/plugins/file_picker_darwin/darwin"
+  Flutter:
+    :path: Flutter
+  polyglot_native:
+    :path: "../native_core"
+
+SPEC CHECKSUMS:
+  file_picker_darwin: 4c2b9a50ea44cb3b071381ea0cf48591bdd80251
+  Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
+  polyglot_native: e779bed578e227389c4c819c5f60084ecc485de9
+
+PODFILE CHECKSUM: 8804eb0990afcb0efba522e3931e5b785120cecd
+
+COCOAPODS: 1.16.2

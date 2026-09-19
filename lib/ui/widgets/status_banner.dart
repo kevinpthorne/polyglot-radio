@@ -15,7 +15,7 @@ class StatusBanner extends StatelessWidget {
           valueListenable: coordinator.activeProtocolNotifier,
           builder: (context, activeProto, _) {
             return Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               color: isLocked
                   ? Colors.green.withOpacity(0.18)
                   : const Color(0xFF161B22),
@@ -39,27 +39,31 @@ class StatusBanner extends StatelessWidget {
                           : null,
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  Text(
-                    isLocked
-                        ? "LOCKED: ${activeProto ?? 'DEMODULATING'}"
-                        : "SENTRY: PARALLEL MONITOR",
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 0.5,
-                      color: isLocked ? Colors.greenAccent : Colors.cyanAccent,
-                      fontFamily: 'monospace',
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      isLocked
+                          ? "LOCKED: ${activeProto ?? 'DEMODULATING'}"
+                          : "SENTRY: PARALLEL MONITOR",
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                      style: TextStyle(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.3,
+                        color: isLocked ? Colors.greenAccent : Colors.cyanAccent,
+                        fontFamily: 'monospace',
+                      ),
                     ),
                   ),
-                  const Spacer(),
+                  const SizedBox(width: 6),
                   // Callsign Badge
                   ValueListenableBuilder(
                     valueListenable: coordinator.settingsNotifier,
                     builder: (context, settings, _) {
                       final call = settings.callsign;
                       return Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                         decoration: BoxDecoration(
                           color: call != null ? Colors.blueGrey.withOpacity(0.3) : Colors.amber.withOpacity(0.2),
                           borderRadius: BorderRadius.circular(4),
@@ -71,7 +75,7 @@ class StatusBanner extends StatelessWidget {
                         child: Text(
                           call != null ? "CALL: $call" : "NO CALLSIGN",
                           style: TextStyle(
-                            fontSize: 10,
+                            fontSize: 9.5,
                             fontFamily: 'monospace',
                             fontWeight: FontWeight.bold,
                             color: call != null ? Colors.white70 : Colors.amber,
@@ -80,13 +84,13 @@ class StatusBanner extends StatelessWidget {
                       );
                     },
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 6),
                   // Loopback badge
                   ValueListenableBuilder(
                     valueListenable: coordinator.settingsNotifier,
                     builder: (context, settings, _) {
                       return Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                         decoration: BoxDecoration(
                           color: settings.isLoopbackEnabled
                               ? Colors.purple.withOpacity(0.3)
@@ -102,7 +106,7 @@ class StatusBanner extends StatelessWidget {
                         child: Text(
                           settings.isLoopbackEnabled ? "LOOPBACK" : "LIVE MIC",
                           style: TextStyle(
-                            fontSize: 10,
+                            fontSize: 9.5,
                             fontFamily: 'monospace',
                             color: settings.isLoopbackEnabled
                                 ? Colors.purpleAccent

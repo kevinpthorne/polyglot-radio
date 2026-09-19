@@ -135,18 +135,22 @@ class _StationSettingsDialogState extends State<StationSettingsDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       backgroundColor: const Color(0xFF161B22),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 20),
       title: Row(
         children: const [
           Icon(Icons.settings, color: Colors.cyanAccent, size: 20),
           SizedBox(width: 8),
-          Text(
-            "STATION SETTINGS",
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 1.0,
-              fontFamily: 'monospace',
-              color: Colors.cyanAccent,
+          Expanded(
+            child: Text(
+              "STATION SETTINGS",
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.0,
+                fontFamily: 'monospace',
+                color: Colors.cyanAccent,
+              ),
             ),
           ),
         ],

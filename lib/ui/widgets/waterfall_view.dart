@@ -59,15 +59,20 @@ class _WaterfallViewState extends State<WaterfallView> {
             bottom: 4,
             left: 8,
             right: 8,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: const [
-                Text("0 Hz", style: TextStyle(color: Colors.white54, fontSize: 10, fontFamily: 'monospace')),
-                Text("6 kHz", style: TextStyle(color: Colors.white54, fontSize: 10, fontFamily: 'monospace')),
-                Text("12 kHz", style: TextStyle(color: Colors.white54, fontSize: 10, fontFamily: 'monospace')),
-                Text("18 kHz (Ultrasound)", style: TextStyle(color: Colors.cyanAccent, fontSize: 10, fontFamily: 'monospace')),
-                Text("24 kHz", style: TextStyle(color: Colors.white54, fontSize: 10, fontFamily: 'monospace')),
-              ],
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final isNarrow = constraints.maxWidth < 420;
+                return Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text("0 Hz", style: TextStyle(color: Colors.white54, fontSize: 9.5, fontFamily: 'monospace')),
+                    Text(isNarrow ? "6k" : "6 kHz", style: const TextStyle(color: Colors.white54, fontSize: 9.5, fontFamily: 'monospace')),
+                    Text(isNarrow ? "12k" : "12 kHz", style: const TextStyle(color: Colors.white54, fontSize: 9.5, fontFamily: 'monospace')),
+                    Text(isNarrow ? "18k" : "18 kHz", style: const TextStyle(color: Colors.cyanAccent, fontSize: 9.5, fontFamily: 'monospace')),
+                    Text(isNarrow ? "24k" : "24 kHz", style: const TextStyle(color: Colors.white54, fontSize: 9.5, fontFamily: 'monospace')),
+                  ],
+                );
+              },
             ),
           ),
         ],
