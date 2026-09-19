@@ -131,6 +131,37 @@ class _ScreenshotGeneratorAppState extends State<ScreenshotGeneratorApp> {
         ),
       ),
     ),
+    // iPad: 2048 x 2732 px (12.9" / 13" iPad Pro Portrait)
+    _ScreenshotTarget(
+      fileName: 'ipad_01_waterfall_portrait.png',
+      width: 1024,
+      height: 1366,
+      pixelRatio: 2.0,
+      widget: const HomeScreen(),
+    ),
+    // iPad: 2732 x 2048 px (12.9" / 13" iPad Pro Landscape)
+    _ScreenshotTarget(
+      fileName: 'ipad_02_waterfall_landscape.png',
+      width: 1366,
+      height: 1024,
+      pixelRatio: 2.0,
+      widget: const HomeScreen(),
+    ),
+    _ScreenshotTarget(
+      fileName: 'ipad_03_station_settings.png',
+      width: 1024,
+      height: 1366,
+      pixelRatio: 2.0,
+      widget: const Scaffold(
+        backgroundColor: Color(0xFF0D1117),
+        body: Center(
+          child: SizedBox(
+            width: 700,
+            child: SingleChildScrollView(child: StationSettingsDialog()),
+          ),
+        ),
+      ),
+    ),
     // macOS: 2560 x 1600 px (16:10 Retina)
     _ScreenshotTarget(
       fileName: 'macos_01_desktop_main.png',
@@ -161,6 +192,15 @@ class _ScreenshotGeneratorAppState extends State<ScreenshotGeneratorApp> {
     _processNext();
   }
 
+  Directory _getOutputDirectory() {
+    const defaultPath = '/Users/kevint/dev/polyglot-radio/build/store_screenshots';
+    final dir = Directory(defaultPath);
+    if (!dir.existsSync()) {
+      dir.createSync(recursive: true);
+    }
+    return dir;
+  }
+
   Future<void> _processNext() async {
     if (_currentIndex >= _targets.length) {
       setState(() {
@@ -186,9 +226,7 @@ class _ScreenshotGeneratorAppState extends State<ScreenshotGeneratorApp> {
         image.dispose();
 
         if (byteData != null) {
-          final dir = Directory('build/store_screenshots');
-          if (!dir.existsSync()) dir.createSync(recursive: true);
-
+          final dir = _getOutputDirectory();
           final file = File('${dir.path}/${target.fileName}');
           await file.writeAsBytes(byteData.buffer.asUint8List());
           print('Saved: ${file.path} (${image.width}x${image.height} px)');
